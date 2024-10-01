@@ -24,18 +24,18 @@ export default function ActionFormSwipe() {
             Type
           </Label>
           <Select>
-              <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select an action" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value="touch">Touch</SelectItem>
-                  <SelectItem value="typing">Typing</SelectItem>
-                  <SelectItem value="swipe">Swipe</SelectItem>
-                  <SelectItem value="openApk">Open APK</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+                <SelectItem value="typing">Typing</SelectItem>
+                <SelectItem value="swipe">Swipe</SelectItem>
+                <SelectItem value="openApk">Open APK</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
         <div className="grid grid-cols-4 items-center gap-4">
           <Label htmlFor="name" className="text-right">

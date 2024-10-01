@@ -88,15 +88,60 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ActionDialog } from "@/page_components/ActionDialog"
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store';
+import { addDevice, setCurrentDevice } from '@/store/slices/devicesSlice';
+import { Device } from '@/types/Device';
+import { useAppDispatch, useAppSelector } from '@/hooks/reduxHooks';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import JSADBClient from "@/services/JSADBClient"
 
 
 export const description =
   "An orders dashboard with a sidebar navigation. The sidebar has icon navigation. The content area has a breadcrumb and search in the header. The main area has a list of recent orders with a filter and export button. The main area also has a detailed view of a single order with order details, shipping information, billing information, customer information, and payment information."
 
-export default function Dashboard() {
+export default function Builder() {
   const [openActionDialog, setOpenActionDialog] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
+
+  const dispatch = useAppDispatch();
+  const devices = useAppSelector((state: RootState) => state.devices.devices);
+
+  const availableDevices = devices.map((device: Device) => (
+    <SelectItem key={device.id} value={device.id}>{device.name}</SelectItem>
+  ));
+
+  const handleDeviceChange = (deviceId: string) => {
+    console.log("handleDeviceChange: ", deviceId);
+    console.log("handleDeviceChange devices: ", devices);
+    const device = devices.find((d: Device) => d.id === deviceId);
+    if (device) {
+      dispatch(setCurrentDevice(device));
+    }
+  };
+
+  useEffect(() => {
+    const jsadbClient = new JSADBClient();
+    jsadbClient.getDeviceList().then((fetchedDevices) => {
+      console.log("devices: ", fetchedDevices);
+      fetchedDevices.forEach((device) => {
+        dispatch(addDevice(device));
+      });
+
+      if (fetchedDevices.length === 1) {
+        setSelectedDevice(fetchedDevices[0]);
+        handleDeviceChange(fetchedDevices[0].id);
+      }
+
+      const storedCurrentDevice = localStorage.getItem('currentDevice');
+      if (storedCurrentDevice) {
+        const currentDevice = JSON.parse(storedCurrentDevice) as Device;
+        handleDeviceChange(currentDevice.id);
+      }
+    });
+  }, [dispatch, devices]);
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -225,6 +270,20 @@ export default function Dashboard() {
                   Screencap
                 </CardTitle>
                 <div className="flex justify-center gap-1">
+                  
+                  <Select 
+                    onValueChange={(value) => handleDeviceChange(value)}
+                    value={selectedDevice?.deviceId}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select a device" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {availableDevices}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                   <Button size="sm" variant="outline" className="h-8 gap-2">
                     <RefreshCcw className="h-3.5 w-3.5" />
                     <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">

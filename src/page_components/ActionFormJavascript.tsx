@@ -32,6 +32,9 @@ export default function ActionFormJavascript() {
               Sample value
             </Label>
             <Input id="sample_value" />
+            <Label htmlFor="humanize" className="text-right">
+            </Label>
+            <Button>Run</Button>
           </div>
         </div>
       </div>
