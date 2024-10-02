@@ -53,6 +53,9 @@ export default function ActionFormTouchCoordinate() {
       <div className="min-w-[450px] max-w-[450px]">
         <div className="bg-gray-200 p-4 rounded-md flex justify-between items-center">
           <h3 className="text-lg font-medium">Screencap</h3>
+          <div className="text-sm font-medium">
+            X: {coordinates.x}, Y: {coordinates.y}
+          </div>
           <Button size="sm" variant="outline" className="h-8 gap-2" onClick={captureScreenshot}>
             <RefreshCcw className="h-3.5 w-3.5" />
             <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
@@ -78,44 +81,37 @@ export default function ActionFormTouchCoordinate() {
                 onClick={handleImageClick}
                 onLoad={handleImageLoad}
               />
-              <div style={{
-                position: 'absolute',
-                top: '10px',
-                left: '10px',
-                background: 'rgba(0, 0, 0, 0.7)',
-                color: 'white',
-                padding: '5px',
-                borderRadius: '3px',
-                fontSize: '14px'
-              }}>
-                X: {coordinates.x}, Y: {coordinates.y}
-              </div>
             </>
           )}
         </div>
       </div>
       <div className="flex flex-col gap-4 grow">
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="x" className="text-right">
-            X
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="element-xpath" className="pb-2">
+            Action Properties
           </Label>
-          <Input
-            id="x"
-            className="col-span-3"
-            value={savedCoordinates.x}
-            readOnly
-          />
-        </div>
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="y" className="text-right">
-            Y
-          </Label>
-          <Input
-            id="y"
-            className="col-span-3"
-            value={savedCoordinates.y}
-            readOnly
-          />
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="x" className="text-right">
+              X
+            </Label>
+            <Input
+              id="x"
+              className="col-span-3"
+              value={savedCoordinates.x}
+              readOnly
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="y" className="text-right">
+              Y
+            </Label>
+            <Input
+              id="y"
+              className="col-span-3"
+              value={savedCoordinates.y}
+              readOnly
+            />
+          </div>
         </div>
       </div>
     </div>

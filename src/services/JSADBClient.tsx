@@ -103,8 +103,12 @@ class JSADBClient {
     return this.request<any>('/service-check', { service, device });
   }
 
-  async findNearestNode(x: number, y: number, device: string): Promise<any> {
+  async findNearestNode(device: string, x: number, y: number): Promise<any> {
     return this.request<any>('/find-nearest-node', { x: x.toString(), y: y.toString(), device });
+  }
+
+  async findNodeByXPath(xpath: string, device: string): Promise<any> {
+    return this.request<any>('/find-node-by-xpath', { xpath, device });
   }
 }
 
