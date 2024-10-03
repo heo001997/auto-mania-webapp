@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import JSADBClient from "@/services/JSADBClient";
 import { RootState } from "@/store";
-import { RefreshCcw, Search, Upload } from "lucide-react";
+import { RefreshCcw, Scan, Search, Upload, X } from "lucide-react";
 import { ReactNode, useEffect, useState, useRef, MouseEvent } from "react";
 import { useSelector } from "react-redux";
 import { templateMatchingWithNMS } from "@/services/ImageFinder";
@@ -22,31 +22,45 @@ export default function ActionFormTouchImage() {
   const imgRef = useRef<HTMLImageElement>(null);
   const device = useSelector((state: RootState) => state.devices.currentDevice);
   const jsadb = new JSADBClient();
+  const [searchArea, setSearchArea] = useState<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
+  const [isSelectingSearchArea, setIsSelectingSearchArea] = useState(false);
 
   const handleMouseMove = (e: MouseEvent<HTMLImageElement>) => {
-    if (imgRef.current && isDragging) {
+    if (imgRef.current) {
       const rect = imgRef.current.getBoundingClientRect();
       const x = Math.round((e.clientX - rect.left) * (imageDimensions.width / rect.width));
       const y = Math.round((e.clientY - rect.top) * (imageDimensions.height / rect.height));
-      setCropEnd({ x, y });
+      
+      if (isSelectingSearchArea && searchArea) {
+        setSearchArea({ ...searchArea, endX: x, endY: y });
+      } else if (isDragging) {
+        setCropEnd({ x, y });
+      }
     }
   };
 
   const handleMouseDown = (e: MouseEvent<HTMLImageElement>) => {
-    e.preventDefault(); // Prevent default drag behavior
+    e.preventDefault();
 
     if (imgRef.current) {
       const rect = imgRef.current.getBoundingClientRect();
       const x = Math.round((e.clientX - rect.left) * (imageDimensions.width / rect.width));
       const y = Math.round((e.clientY - rect.top) * (imageDimensions.height / rect.height));
-      setCropStart({ x, y });
-      setCropEnd({ x, y });
-      setIsDragging(true);
+      
+      if (isSelectingSearchArea) {
+        setSearchArea({ startX: x, startY: y, endX: x, endY: y });
+      } else {
+        setCropStart({ x, y });
+        setCropEnd({ x, y });
+        setIsDragging(true);
+      }
     }
   };
 
   const handleMouseUp = () => {
-    if (cropStart && cropEnd) {
+    if (isSelectingSearchArea) {
+      setIsSelectingSearchArea(false);
+    } else if (cropStart && cropEnd) {
       cropImage();
     }
     setIsDragging(false);
@@ -62,6 +76,7 @@ export default function ActionFormTouchImage() {
     setCropStart(null);
     setCropEnd(null);
     setBounds(null);
+    setSearchArea(null);
 
     jsadb.screenshot(device.id).then((data) => {
       setScreencapSrc(`data:image/png;base64,${data.result}`);
@@ -74,6 +89,8 @@ export default function ActionFormTouchImage() {
 
   const handleSearchClick = async () => {
     setElementBounds('');
+    setBounds(null);
+
     if (screencapSrc && croppedImage) {
       try {
         const screencapImg = new Image();
@@ -88,13 +105,13 @@ export default function ActionFormTouchImage() {
               const results = await templateMatchingWithNMS(
                 screencapSrc,
                 croppedImage,
-                1, // threshold
-                0.8, // nms threshold
-                {
-                  x: 0,
-                  y: 0,
-                  width: screencapImg.width,
-                  height: screencapImg.height
+                1, // matching numbers
+                0.8, // threshold
+                searchArea || {
+                  startX: 0,
+                  startY: 0,
+                  endX: screencapImg.width,
+                  endY: screencapImg.height
                 }
               );
 
@@ -175,6 +192,26 @@ export default function ActionFormTouchImage() {
       );
     }
 
+    // Add this block to render search area (blue)
+    if (searchArea) {
+      const left = Math.min(searchArea.startX, searchArea.endX) * scaleX;
+      const top = Math.min(searchArea.startY, searchArea.endY) * scaleY;
+      const width = Math.abs(searchArea.endX - searchArea.startX) * scaleX;
+      const height = Math.abs(searchArea.endY - searchArea.startY) * scaleY;
+
+      elements.push(
+        <div key="searchArea" style={{
+          position: 'absolute',
+          left: `${left}px`,
+          top: `${top}px`,
+          width: `${width}px`,
+          height: `${height}px`,
+          border: '2px solid blue',
+          pointerEvents: 'none'
+        }} />
+      );
+    }
+
     return elements;
   };
 
@@ -230,6 +267,25 @@ export default function ActionFormTouchImage() {
       // Calculate and set the element bounds
       const bounds = `[${x},${y}][${x + width},${y + height}]`;
       setElementBounds(bounds);
+    }
+  };
+
+  const handleSearchAreaClick = () => {
+    if (searchArea) {
+      // Clear the search area if it's already set
+      setSearchArea(null);
+    } else {
+      // Start selecting a new search area
+      setIsSelectingSearchArea(true);
+    }
+  };
+
+  const handleSearchAreaInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const match = value.match(/\[(\d+),(\d+)\]\[(\d+),(\d+)\]/);
+    if (match) {
+      const [, startX, startY, endX, endY] = match.map(Number);
+      setSearchArea({ startX, startY, endX, endY });
     }
   };
 
@@ -316,6 +372,40 @@ export default function ActionFormTouchImage() {
               </span>
             </Button>
           </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="search-area" className="text-right">
+              Area
+            </Label>
+            <Input
+              id="search-area"
+              className="col-span-2"
+              value={searchArea ? `[${searchArea.startX},${searchArea.startY}][${searchArea.endX},${searchArea.endY}]` : ''}
+              onChange={handleSearchAreaInputChange}
+              placeholder="All screen"
+            />
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="col-span-1 h-8 gap-2" 
+              onClick={handleSearchAreaClick}
+            >
+              {searchArea ? (
+                <>
+                  <X className="h-3.5 w-5" />
+                  <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
+                    Clear
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Scan className="h-3.5 w-5" />
+                  <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
+                    Set
+                  </span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
         <Separator />
         <div className="flex flex-col gap-2">
@@ -323,7 +413,7 @@ export default function ActionFormTouchImage() {
             Inspecting Element
           </Label>
           <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="element-bounds" className="text-right">
+            <Label htmlFor="element-bounds" className="text-right">
               Bound
             </Label>
             <Input

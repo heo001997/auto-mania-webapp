@@ -100,7 +100,7 @@ export const templateMatchingWithNMS = async (
   subImageSrc: string,
   matchingNumbers: number,
   threshold = 0.8,
-  regionOfInterest: { x: number; y: number; width: number; height: number } | null = null
+  regionOfInterest: { startX: number; startY: number; endX: number; endY: number } | null = null
 ) => {
   return withOpenCV(async () => {
     const cv = window.cv;
@@ -119,9 +119,11 @@ export const templateMatchingWithNMS = async (
       let srcROI = src;
       let roiRect;
 
-      if (useROI) {
-        const { x, y, width, height } = regionOfInterest;
-        roiRect = new cv.Rect(x, y, width, height);
+      if (useROI && regionOfInterest) {
+        const { startX, startY, endX, endY } = regionOfInterest;
+        const width = endX - startX;
+        const height = endY - startY;
+        roiRect = new cv.Rect(startX, startY, width, height);
         srcROI = src.roi(roiRect);
       }
 
@@ -163,8 +165,8 @@ export const templateMatchingWithNMS = async (
         if (data[i] >= threshold) {
           const y = Math.floor(i / result.cols);
           const x = i % result.cols;
-          const matchX = x + (useROI ? roiRect.x : 0);
-          const matchY = y + (useROI ? roiRect.y : 0);
+          const matchX = x + (useROI && roiRect ? roiRect.x : 0);
+          const matchY = y + (useROI && roiRect ? roiRect.y : 0);
           matchLocations.push({ x: matchX, y: matchY, score: data[i] });
         }
       }
