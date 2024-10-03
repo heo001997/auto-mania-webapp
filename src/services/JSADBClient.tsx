@@ -110,6 +110,18 @@ class JSADBClient {
   async findNodeByXPath(xpath: string, device: string): Promise<any> {
     return this.request<any>('/find-node-by-xpath', { xpath, device });
   }
+
+  async getCurrentInputText(device: string): Promise<any> {
+    return this.request<any>('/get-current-input-text', { device });
+  }
+
+  async clearCurrentInput(device: string, currentText: string | null = null): Promise<any> {
+    const params: Record<string, string> = { device };
+    if (currentText) {
+      params.currentText = currentText;
+    }
+    return this.request<any>('/clear-current-input', params);
+  }
 }
 
 export default JSADBClient;
