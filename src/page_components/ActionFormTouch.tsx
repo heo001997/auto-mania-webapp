@@ -1,15 +1,11 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from "@/components/ui/select";
-import { RefreshCcw } from "lucide-react";
 import { useState } from "react";
+import { Separator } from "@/components/ui/separator";
 import ActionFormTouchCoordinate from "./ActionFormTouchCoordinate";
 import ActionFormTouchXPath from "./ActionFormTouchXPath";
 import ActionFormTouchText from "./ActionFormTouchText";
 import ActionFormTouchImage from "./ActionFormTouchImage";
-import { Separator } from "@/components/ui/separator";
-
 
 export default function ActionFormTouch() {
   const [type, setType] = useState<string>('')
