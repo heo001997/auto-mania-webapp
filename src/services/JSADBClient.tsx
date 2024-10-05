@@ -123,8 +123,8 @@ class JSADBClient {
     return this.request<any>('/clear-current-input', params);
   }
 
-  async keepScreenOn(device: string): Promise<any> {
-    return this.request<any>('/keep-screen-on', { device });
+  async screenAwake(device: string, isOn: boolean): Promise<any> {
+    return this.request<any>('/screen-awake', { device, isOn: isOn.toString() });
   }
 }
 

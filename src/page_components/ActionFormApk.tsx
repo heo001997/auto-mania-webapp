@@ -136,7 +136,6 @@ export default function ActionFormApk() {
                               console.log("Selected package:", newPackageName);
                               setOpen(false);
                             }}
-                            className="pointer-events-auto cursor-pointer hover:bg-accent"
                           >
                             {app}
                             <Check

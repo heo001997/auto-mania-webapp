@@ -26,6 +26,7 @@ import {
   Settings,
   ShoppingCart,
   Smartphone,
+  Sun,
   Truck,
   Users2,
 } from "lucide-react"
@@ -98,6 +99,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks/reduxHooks';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import JSADBClient from "@/services/JSADBClient"
 import { Switch } from "@/components/ui/switch"
+import { Toggle } from "@/components/ui/toggle"
 
 
 export const description =
@@ -145,28 +147,24 @@ export default function Builder() {
     });
   }, [dispatch, devices]);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (keepScreenOnActive && selectedDevice) {
-      interval = setInterval(() => {
+  const handleKeepScreenOnToggle = async (isPressed: boolean) => {
+    setKeepScreenOnActive(isPressed);
+    if (selectedDevice) {
+      try {
         const jsadbClient = new JSADBClient();
-        jsadbClient.keepScreenOn(selectedDevice.id)
-          .then(response => {
-            if (!response.success) {
-              console.error(`Failed to keep screen on: ${response.error}`);
-              setKeepScreenOnActive(false);
-            } else {
-              console.log('Keep screen on command sent successfully');
-            }
-          })
-          .catch(error => {
-            console.error('Error sending keep screen on command:', error);
-            setKeepScreenOnActive(false);
-          });
-      }, 5000);
+        const response = await jsadbClient.screenAwake(selectedDevice.id, isPressed);
+        if (!response.success) {
+          console.error(`Failed to keep screen on: ${response.error}`);
+          setKeepScreenOnActive(!isPressed); // Revert the state if the API call fails
+        } else {
+          console.log('Keep screen on command sent successfully');
+        }
+      } catch (error) {
+        console.error('Error sending keep screen on command:', error);
+        setKeepScreenOnActive(!isPressed); // Revert the state if there's an error
+      }
     }
-    return () => clearInterval(interval);
-  }, [keepScreenOnActive, selectedDevice]);
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -315,12 +313,22 @@ export default function Builder() {
                     </span>
                   </Button>
                   <div className="flex items-center space-x-2">
-                    <Switch
-                      id="keep-screen-on"
-                      checked={keepScreenOnActive}
-                      onCheckedChange={setKeepScreenOnActive}
-                    />
-                    <Label htmlFor="keep-screen-on">Keep Screen On</Label>
+                    <Toggle
+                      size="sm"
+                      pressed={keepScreenOnActive}
+                      onPressedChange={handleKeepScreenOnToggle}
+                      variant="outline"
+                      className={`flex items-center gap-2 h-8 px-2 ${
+                        keepScreenOnActive
+                          ? 'bg-accent text-accent-foreground border-2 border-dashed'
+                          : 'bg-background text-foreground hover:bg-accent hover:text-accent-foreground'
+                      }`}
+                    >
+                      <Sun className="h-3.5 w-3.5" />
+                      <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
+                        Awake
+                      </span>
+                    </Toggle>
                   </div>
                 </div>
               </CardHeader>
