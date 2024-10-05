@@ -63,8 +63,8 @@ class JSADBClient {
     return this.request<any>('/get-resolution', { device });
   }
 
-  async listInstalledApps(device: string): Promise<any> {
-    return this.request<any>('/list-installed-apps', { device });
+  async listInstalledApps(device: string, includeSystemApps: boolean = false): Promise<any> {
+    return this.request<any>('/list-installed-apps', { device, includeSystemApps: includeSystemApps.toString() });
   }
 
   async appExists(appPackageName: string, device: string): Promise<any> {
@@ -121,6 +121,10 @@ class JSADBClient {
       params.currentText = currentText;
     }
     return this.request<any>('/clear-current-input', params);
+  }
+
+  async keepScreenOn(device: string): Promise<any> {
+    return this.request<any>('/keep-screen-on', { device });
   }
 }
 

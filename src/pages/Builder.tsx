@@ -97,6 +97,7 @@ import { Device } from '@/types/Device';
 import { useAppDispatch, useAppSelector } from '@/hooks/reduxHooks';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import JSADBClient from "@/services/JSADBClient"
+import { Switch } from "@/components/ui/switch"
 
 
 export const description =
@@ -105,6 +106,7 @@ export const description =
 export default function Builder() {
   const [openActionDialog, setOpenActionDialog] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
+  const [keepScreenOnActive, setKeepScreenOnActive] = useState(false);
 
   const dispatch = useAppDispatch();
   const devices = useAppSelector((state: RootState) => state.devices.devices);
@@ -142,6 +144,29 @@ export default function Builder() {
       }
     });
   }, [dispatch, devices]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (keepScreenOnActive && selectedDevice) {
+      interval = setInterval(() => {
+        const jsadbClient = new JSADBClient();
+        jsadbClient.keepScreenOn(selectedDevice.id)
+          .then(response => {
+            if (!response.success) {
+              console.error(`Failed to keep screen on: ${response.error}`);
+              setKeepScreenOnActive(false);
+            } else {
+              console.log('Keep screen on command sent successfully');
+            }
+          })
+          .catch(error => {
+            console.error('Error sending keep screen on command:', error);
+            setKeepScreenOnActive(false);
+          });
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [keepScreenOnActive, selectedDevice]);
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -269,8 +294,7 @@ export default function Builder() {
                 <CardTitle className="group flex items-center gap-2 text-lg">
                   Screencap
                 </CardTitle>
-                <div className="flex justify-center gap-1">
-                  
+                <div className="flex justify-center gap-1 items-center">
                   <Select 
                     onValueChange={(value) => handleDeviceChange(value)}
                     value={selectedDevice?.deviceId}
@@ -290,6 +314,14 @@ export default function Builder() {
                       Refresh
                     </span>
                   </Button>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="keep-screen-on"
+                      checked={keepScreenOnActive}
+                      onCheckedChange={setKeepScreenOnActive}
+                    />
+                    <Label htmlFor="keep-screen-on">Keep Screen On</Label>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="p-6 text-sm">
