@@ -7,7 +7,6 @@ import {
   Database,
   File,
   Hammer,
-  Home,
   LineChart,
   ListFilter,
   MoreVertical,
@@ -74,7 +73,7 @@ import {
 export const description =
   "An orders dashboard with a sidebar navigation. The sidebar has icon navigation. The content area has a breadcrumb and search in the header. The main area has a list of recent orders with a filter and export button. The main area also has a detailed view of a single order with order details, shipping information, billing information, customer information, and payment information."
 
-export default function Dashboard() {
+export default function Home() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
@@ -87,13 +86,6 @@ export default function Dashboard() {
             <span className="sr-only">Devices</span>
           </a>
           <a
-            href="#"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-          >
-            <Crosshair className="h-5 w-5" />
-            <span className="sr-only">Inspector</span>
-          </a>
-          <a
             href="/builders"
             className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
           >
@@ -102,6 +94,13 @@ export default function Dashboard() {
           </a>
           <a
             href="#"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+          >
+            <Crosshair className="h-5 w-5" />
+            <span className="sr-only">Inspector</span>
+          </a>
+          <a
+            href="/datasets"
             className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
           >
             <Database className="h-5 w-5" />
@@ -142,13 +141,6 @@ export default function Dashboard() {
                 >
                   <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
                   <span className="sr-only">Acme Inc</span>
-                </a>
-                <a
-                  href="#"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
-                  <Home className="h-5 w-5" />
-                  Dashboard
                 </a>
                 <a
                   href="#"
