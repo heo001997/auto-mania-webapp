@@ -16,43 +16,66 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
-import { useState } from "react";
-import { PlusCircle } from "lucide-react"
-import { ActionDialog } from "@/page_components/ActionDialog"
-
+import { useEffect, useState } from "react";
+import { PlusCircle, Trash } from "lucide-react"
+import { DatasetDialog } from "@/page_components/DatasetDialog"
+import { databaseService } from '@/services/DatabaseService';
+import type { Dataset } from "@/types/Dataset";
 
 export default function Dataset() {
   const [openActionDialog, setOpenActionDialog] = useState(false);
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+
+  const handleDelete = async (id: number) => {
+    try {
+      await databaseService.deleteDataset(id);
+      // Update state by removing the deleted dataset
+      setDatasets(prevDatasets => prevDatasets.filter(dataset => dataset.id !== id));
+      console.log(`Dataset with id ${id} deleted successfully`);
+    } catch (error) {
+      console.error("Error deleting dataset:", error);
+    }
+  };
+
+  const handleRowClick = async (id: number) => {
+    try {
+      const dataset = await databaseService.getDataset(id);
+      console.log(dataset);
+      // Do something with the dataset, e.g., set it to state
+    } catch (error) {
+      console.error("Error fetching dataset:", error);
+    }
+  };
+
+  useEffect(() => {
+    async function fetchDatasets() {
+      try {
+        const datasets = await databaseService.getAllDatasets();
+        setDatasets(datasets);
+        console.log('All datasets:', datasets);
+      } catch (error) {
+        console.error('Error fetching datasets:', error);
+      }
+    }
+    
+    fetchDatasets();
+  }, []);
 
   return (
     <Layout currentPage="Datasets">
-      <ActionDialog open={openActionDialog} setOpen={setOpenActionDialog}/>
+      <DatasetDialog open={openActionDialog} setOpen={setOpenActionDialog}/>
       <div className="w-full items-start gap-4">
-        <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-          <Tabs defaultValue="available">
+        <div className="grid auto-rows-max items-start gap-4">
             <div className="flex items-center">
-              <TabsList>
-                <TabsTrigger value="available">Available</TabsTrigger>
-              </TabsList>
-              <div className="ml-auto flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 gap-1 text-sm"
-                  onClick={() => setOpenActionDialog(true)}
-                >
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only">Add</span>
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                className="h-7 gap-1"
+                onClick={() => setOpenActionDialog(true)}
+              >
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only">Add Dataset</span>
+              </Button>
             </div>
-            <TabsContent value="available">
               <Card x-chunk="dashboard-05-chunk-3">
                 <CardHeader className="px-7">
                   <CardTitle>Datasets</CardTitle>
@@ -61,80 +84,58 @@ export default function Dataset() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Id</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead className="hidden sm:table-cell">
-                          Sample
-                        </TableHead>
-                        <TableHead className="hidden sm:table-cell">
-                          Updated At
-                        </TableHead>
-                        <TableHead className="hidden md:table-cell">
-                          Created At
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow className="bg-accent">
-                        <TableCell className="hidden sm:table-cell">
-                          1
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          Dog Followee
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          {`{"username": "prodog123", "name": "Pro Dog 123"}`}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          2023-10-03
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          2023-09-30
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="hidden sm:table-cell">
-                          2
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          Cat Likee
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          {`{"username": "procat123", "name": "Pro Cat 123"}`}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          2023-10-02
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          2023-09-29
-                        </TableCell>
-                      </TableRow>
-                      <TableRow className="bg-accent">
-                        <TableCell className="hidden sm:table-cell">
-                          3
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          Chick Followee
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          {`{"username": "prochick123", "name": "Pro Chick 123"}`}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          2023-10-01
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          2023-09-28
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
+                  <div className="w-full overflow-auto">
+                    <div className="min-w-[800px] max-h-[75vh]">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Id</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead className="hidden sm:table-cell">
+                              Sample
+                            </TableHead>
+                            <TableHead className="hidden sm:table-cell">
+                              Updated At
+                            </TableHead>
+                            <TableHead className="hidden md:table-cell">
+                              Created At
+                            </TableHead>
+                            <TableHead className="hidden md:table-cell">
+                              Delete
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {datasets.map((dataset) => (
+                            <TableRow 
+                              key={dataset.id} 
+                              className={dataset.id % 2 === 0 ? "bg-accent" : ""} 
+                              onClick={() => handleRowClick(dataset.id)}
+                            >
+                              <TableCell>{dataset.id}</TableCell>
+                              <TableCell>{dataset.name}</TableCell>
+                              <TableCell>{JSON.stringify(dataset.data)}</TableCell>
+                              <TableCell>{dataset.updatedAt.toString()}</TableCell>
+                              <TableCell>{dataset.createdAt.toString()}</TableCell>
+                              <TableCell>
+                                <Button 
+                                  variant="ghost" 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(dataset.id);
+                                  }}
+                                >
+                                  <Trash className="h-3.5 w-3.5" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
         </div>
       </div>
     </Layout>
