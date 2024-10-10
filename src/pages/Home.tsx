@@ -86,11 +86,11 @@ export default function Home() {
             <span className="sr-only">Devices</span>
           </a>
           <a
-            href="/builders"
+            href="/workflows"
             className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
           >
             <Hammer className="h-5 w-5" />
-            <span className="sr-only">Builder</span>
+            <span className="sr-only">Workflows</span>
           </a>
           <a
             href="#"

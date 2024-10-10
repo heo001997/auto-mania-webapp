@@ -47,8 +47,8 @@ export interface DatasetDialogProps {
   setDatasetId: (id: number) => void;
   datasetItems: string[];
   setDatasetItems: (items: string[]) => void;
-  datasetParsed: Record<string, string>[];
-  setDatasetParsed: (parsed: Record<string, string>[]) => void;
+  datasetParsed: object[];
+  setDatasetParsed: (parsed: object[]) => void;
 }
 
 export function DatasetDialog({
@@ -81,7 +81,7 @@ export function DatasetDialog({
       setDatasetInput('');
       setDatasetId(0);
       setDatasetItems(['']);
-      setDatasetParsed([]);
+      setDatasetParsed([{}]);
     }
   }, [isNewDataset, open]);
 
@@ -105,7 +105,7 @@ export function DatasetDialog({
       const newDataset = await databaseService.createDataset({
         name: datasetName,
         type: datasetType,
-        data: {},
+        data: [{'': ''}],
       });
       setDatasetSaved(true);
       setDatasetId(newDataset);
@@ -115,7 +115,7 @@ export function DatasetDialog({
         id: newDataset,
         name: datasetName,
         type: datasetType,
-        data: [],
+        data: [{'': ''}],
         updatedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
       };

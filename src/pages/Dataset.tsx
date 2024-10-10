@@ -33,7 +33,7 @@ export default function Dataset() {
   const [datasetInput, setDatasetInput] = useState('');
   const [datasetId, setDatasetId] = useState(0);
   const [datasetItems, setDatasetItems] = useState(['']);
-  const [datasetParsed, setDatasetParsed] = useState<object[]>([]);
+  const [datasetParsed, setDatasetParsed] = useState<object[]>([{}]);
 
   const dispatch = useAppDispatch();
   const datasets = useAppSelector((state) => state.datasets.datasets);
@@ -51,12 +51,16 @@ export default function Dataset() {
   const handleRowClick = async (id: number) => {
     try {
       const dataset = await databaseService.getDataset(id);
+      console.log("dataset: ", dataset)
+      console.log("dataset.data: ", dataset?.data)
+
       if (dataset) {
+        console.log(dataset.data)
         setIsNewDataset(false);
         setDatasetName(dataset.name);
         setDatasetType(dataset.type);
         setDatasetSaved(true);
-        setDatasetInput(dataset.data.map(item => Object.values(item).join(',')).join('\n'));
+        setDatasetInput(dataset.data?.map(item => Object.values(item).join(',')).join('\n'));
         setDatasetId(dataset.id);
         setDatasetItems(Object.keys(dataset.data[0] || {}));
         setDatasetParsed(dataset.data);
@@ -85,7 +89,7 @@ export default function Dataset() {
     }
     
     fetchDatasets();
-  }, [dispatch]);
+  }, []);
 
   const resetFormState = () => {
     setDatasetName('');
@@ -94,7 +98,7 @@ export default function Dataset() {
     setDatasetInput('');
     setDatasetId(0);
     setDatasetItems(['']);
-    setDatasetParsed([]);
+    setDatasetParsed([{}]);
   };
 
   const handleAddDataset = () => {

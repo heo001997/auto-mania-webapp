@@ -12,8 +12,14 @@ import { useAppDispatch, useAppSelector } from '@/hooks/reduxHooks';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import JSADBClient from "@/services/JSADBClient"
 import { Toggle } from "@/components/ui/toggle"
+import { useParams } from 'react-router-dom';
+import { databaseService } from '@/services/DatabaseService';
+import type { Workflow } from "@/types/Workflow";
 
-export default function Builder() {
+
+export default function WorkflowDetail() {
+  const { id } = useParams();
+  const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [openActionDialog, setOpenActionDialog] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [keepScreenOnActive, setKeepScreenOnActive] = useState(false);
@@ -31,6 +37,55 @@ export default function Builder() {
     const device = devices.find((d: Device) => d.id === deviceId);
     if (device) {
       dispatch(setCurrentDevice(device));
+      
+      // Construct the screencap mirror URL
+      const baseUrl = 'http://localhost:6173/';
+      const params = new URLSearchParams({
+        action: 'stream',
+        udid: device.deviceId,
+        player: 'broadway',
+        ws: `ws://localhost:6173/?action=proxy-adb&remote=tcp:8886&udid=${device.deviceId}`
+      });
+      const screencapUrl = `${baseUrl}#!${params.toString()}`;
+      
+      // Update the screencap mirror
+      updateScreencapMirror(screencapUrl);
+    }
+  };
+
+  const updateScreencapMirror = (url: string) => {
+    const cardContent = document.querySelector('.screencap-mirror');
+    if (cardContent) {
+      // Clear existing content
+      cardContent.innerHTML = '';
+      
+      // Create and append an iframe for the screencap mirror
+      const iframe = document.createElement('iframe');
+      iframe.src = url;
+      iframe.style.border = 'none';
+      iframe.style.width = '100%';
+      
+      // Set initial height
+      iframe.style.height = '100%';
+      
+      // Append the iframe to get its dimensions
+      cardContent.appendChild(iframe);
+      
+      // Function to update iframe height
+      const updateHeight = () => {
+        const width = iframe.offsetWidth;
+        const height = Math.round(width / 0.57);
+        iframe.style.height = `${height}px`;
+      };
+      
+      // Update height initially and on window resize
+      updateHeight();
+      window.addEventListener('resize', updateHeight);
+      
+      // Center the iframe
+      iframe.style.display = 'block';
+      iframe.style.marginLeft = 'auto';
+      iframe.style.marginRight = 'auto';
     }
   };
 
@@ -53,7 +108,7 @@ export default function Builder() {
         handleDeviceChange(currentDevice.id);
       }
     });
-  }, [dispatch, devices]);
+  }, [devices]);
 
   const handleKeepScreenOnToggle = async (isPressed: boolean) => {
     setKeepScreenOnActive(isPressed);
@@ -74,10 +129,50 @@ export default function Builder() {
     }
   };
 
+  useEffect(() => {
+    if (id) {
+      const fetchWorkflow = async () => {
+        try {
+          const fetchedWorkflow = await databaseService.getWorkflow(Number(id));
+          if (fetchedWorkflow) {
+            setWorkflow(fetchedWorkflow);
+          }
+        } catch (error) {
+          console.error("Error fetching workflow:", error);
+        }
+      };
+      fetchWorkflow();
+    }
+  }, [id]);
+
+  const jsadb = new JSADBClient();
+
+  const handleBackClick = async () => {
+    if (selectedDevice) {
+      await jsadb.runCommand(`input keyevent 4`);
+    }
+  };
+
+  const handleHomeClick = async () => {
+    if (selectedDevice) {
+      await jsadb.goToHome(selectedDevice.id);
+    }
+  };
+
+  const handleMenuClick = async () => {
+    if (selectedDevice) {
+      await jsadb.runCommand(`input keyevent 187`);
+    }
+  };
+
+  if (!workflow) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <Layout currentPage="Builders">
+    <Layout currentPage="Workflows">
       <ActionDialog open={openActionDialog} setOpen={setOpenActionDialog}/>
-        <div className="min-w-[400px] max-w-[500px]">
+        <div className="max-w-[500px] xl:min-w-[320px] 2xl:min-w-[450px] ">
           <Card className="overflow-hidden" x-chunk="dashboard-05-chunk-4">
             <CardHeader className="bg-muted/50">
               <CardTitle className="group flex items-center gap-2 text-lg">
@@ -97,12 +192,6 @@ export default function Builder() {
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-                <Button size="sm" variant="outline" className="h-8 gap-2">
-                  <RefreshCcw className="h-3.5 w-3.5" />
-                  <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
-                    Refresh
-                  </span>
-                </Button>
                 <div className="flex items-center space-x-2">
                   <Toggle
                     size="sm"
@@ -123,24 +212,25 @@ export default function Builder() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-6 text-sm">
+            <CardContent className="p-0 screencap-mirror text-sm">
+              {/* The screencap mirror will be inserted here by the updateScreencapMirror function */}
             </CardContent>
             <CardFooter className="flex flex-col justify-center border-t bg-muted/50 px-6 py-3">
               <div>
               <div className="flex justify-center gap-1">
-                <Button size="sm" variant="outline" className="h-8 gap-2">
+                <Button size="sm" variant="outline" className="h-8 gap-2" onClick={handleBackClick}>
                   <ArrowBigLeft className="h-3.5 w-3.5" />
                   <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
                     Back
                   </span>
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 gap-1">
+                <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleHomeClick}>
                   <House className="h-3.5 w-3.5" />
                   <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
                     Home
                   </span>
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 gap-1">
+                <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleMenuClick}>
                   <LayoutGrid className="h-3.5 w-3.5" />
                   <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
                     Menu
@@ -148,16 +238,15 @@ export default function Builder() {
                 </Button>
               </div>
               </div>
-              <div className="text-xs text-muted-foreground justify-self-end mt-3">
-                Updated <time dateTime="2023-11-23">November 23, 2023</time>
-              </div>
             </CardFooter>
           </Card>
         </div>
         <div className="w-full items-start gap-4">
           <Card className="sm:col-span-2" x-chunk="dashboard-05-chunk-0">
             <CardHeader className="pb-3">
-              <CardTitle>Flow</CardTitle>
+              <CardTitle>
+                Flow: {workflow.name}
+              </CardTitle>
               <CardDescription className="max-w-lg text-balance leading-relaxed">
                 Build your flow here
               </CardDescription>

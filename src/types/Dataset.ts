@@ -10,7 +10,6 @@ export interface Dataset {
 export interface SerializableDataset extends Omit<Dataset, 'updatedAt' | 'createdAt'> {
   updatedAt: string;
   createdAt: string;
-  data: Dataset[];
 }
 
 export type NewDataset = Omit<Dataset, 'id' | 'updatedAt' | 'createdAt'>;

@@ -4,16 +4,22 @@ import {
 } from "react-router-dom";
 import './App.css'
 import Home from './pages/Home'
-import Builder from './pages/Builder';
+import Workflow from './pages/Workflow';
 import Dataset from './pages/Dataset';
+import WorkflowDetail from './pages/WorkflowDetail';
+
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Home />,
   },
   {
-    path: "builders",
-    element: <Builder />,
+    path: "workflows",
+    element: <Workflow />,
+  },
+  {
+    path: "workflow/:id",
+    element: <WorkflowDetail />,
   },
   {
     path: "datasets",

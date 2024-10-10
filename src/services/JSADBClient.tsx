@@ -19,7 +19,7 @@ class JSADBClient {
   }
 
   async runCommand(command: string): Promise<any> {
-    return this.request<any>('/run-command', { command });
+    return this.request<any>('/run-command', { command: encodeURIComponent(command) });
   }
 
   async getDeviceList(): Promise<Device[]> {
