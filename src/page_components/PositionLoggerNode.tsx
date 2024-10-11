@@ -1,8 +1,10 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { Node, BuiltInNode } from '@xyflow/react';
+import { debug } from 'console';
 import { Play, Plus, PlusCircle, X } from 'lucide-react';
+import { useId } from 'react';
 
-export type PositionLoggerNode = Node<{ label: string }, 'position-logger'>;
+export type PositionLoggerNode = Node<{ label: string; setNodes?: (nodes: AppNode[]) => void }, 'position-logger'>;
 export type AppNode = BuiltInNode | PositionLoggerNode;
 
 export function PositionLoggerNode({
@@ -10,8 +12,33 @@ export function PositionLoggerNode({
   positionAbsoluteY,
   data,
 }: NodeProps<PositionLoggerNode>) {
-  const x = `${Math.round(positionAbsoluteX)}px`;
-  const y = `${Math.round(positionAbsoluteY)}px`;
+  const x = Math.round(positionAbsoluteX);
+  const y = Math.round(positionAbsoluteY);
+  const displayX = x + 'px';
+  const displayY = y + 'px';
+
+  function handleAddNode(event: React.MouseEvent, x: number, y: number) {
+    event.stopPropagation();
+
+    const position = {
+      x: x + 200,
+      y: y,
+    };
+    const newNode = {
+      id: crypto.randomUUID(),
+      type: 'position-logger',
+      position: position,
+      data: { label: `New Action`, setNodes: data.setNodes },
+    };
+
+    data.setNodes && data.setNodes((prevNodes) => {
+      console.log("prevNodes: ", prevNodes)
+      console.log("newNode: ", newNode)
+      return [...prevNodes, newNode]
+    });
+
+    console.log('clicked add new node')
+  }
 
   return (
     // We add this class to use the same styles as React Flow's default nodes.
@@ -36,17 +63,14 @@ export function PositionLoggerNode({
           <Play className="w-4 h-4" />
         </button>
         <button className="absolute right-0 bg-white rounded-full shadow-md w-4 h-4 flex items-center justify-center"
-          onClick={(event) => {
-            event?.stopPropagation();
-            console.log('clicked add new node')
-          }}
+          onClick={(e) => handleAddNode(e, x, y)}
         >
           <Plus className="w-4 h-4" />
         </button>
       </div>
 
       <div>
-        {x} {y}
+        {displayX} {displayY}
       </div>
 
       <Handle 
