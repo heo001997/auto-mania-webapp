@@ -3,7 +3,7 @@ import { Device } from "../types/Device";
 class JSADBClient {
   private baseUrl: string;
 
-  constructor(baseUrl: string = 'http://localhost:7173') {
+  constructor(baseUrl: string = 'http://localhost:9744') {
     this.baseUrl = baseUrl;
   }
 
