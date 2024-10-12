@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useState, useRef, useContext } from "react";
 import { ArrowBigLeft, CirclePlus, House, LayoutGrid, MoveDown, MoveLeft, MoveRight, Plus, PlusCircle, RefreshCcw, Sun } from "lucide-react"
 import Layout from '@/components/Layout';
 import { Button } from "@/components/ui/button"
@@ -30,17 +30,14 @@ import {
 } from '@xyflow/react';
 import { AppNode, PositionLoggerNode } from '@/page_components/PositionLoggerNode';
 import '@xyflow/react/dist/style.css';
+import { WorkflowContext } from "@/contexts/WorkflowContext";
+import { ActionContext } from "@/contexts/ActionContext";
 
 export default function WorkflowDetail() {
-  const initialEdges: Edge[] = [
-    // { id: 'a->c', source: 'a', target: 'c', animated: true },
-    // { id: 'b->d', source: 'b', target: 'd' },
-    // { id: 'c->d', source: 'c', target: 'd', animated: true },
-  ]
-
   const dispatch = useAppDispatch();
   const { id } = useParams();
-  const [workflow, setWorkflow] = useState<Workflow | null>(null);
+  const [workflow, setWorkflow] = useState<Workflow | object>({});
+  const [actionId, setActionId] = useState<string>('');
   const [openActionDialog, setOpenActionDialog] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<AppNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -55,7 +52,13 @@ export default function WorkflowDetail() {
         try {
           const fetchedWorkflow = await databaseService.getWorkflow(Number(id));
           if (fetchedWorkflow) {
-            setWorkflow(fetchedWorkflow);
+            console.log("fetchedWorkflow: ", fetchedWorkflow)
+            if (fetchedWorkflow.data) {
+              const newNode: AppNode = { id: 'starter', type: 'position-logger', position: { x: 0, y: 0 }, data: { label: 'Start', setWorkflow: setWorkflow, action: {} } }
+              setWorkflow({ ...fetchedWorkflow, data: { 'starter': newNode } });
+            } else {
+              setWorkflow(fetchedWorkflow);
+            }
           }
         } catch (error) {
           console.error("Error fetching workflow:", error);
@@ -66,58 +69,63 @@ export default function WorkflowDetail() {
   }, [id]);
 
   useEffect(() => {
-    console.log("workflow: ", workflow);
-    setNodes([
-      { id: 'a', type: 'position-logger', position: { x: 0, y: 0 }, data: { label: 'Start', setNodes: setNodes } },
-    ]);
-  }, []);
-
-  useEffect(() => {
-    console.log("nodes: ", nodes);
-    console.log("edges: ", edges);
-  }, [nodes.length, edges.length])
+    if (workflow && workflow.data) {
+      const newNodes = Object.values(workflow.data);
+      console.log("newNodes: ", newNodes);
+      setNodes(newNodes);
+    }
+  }, [workflow])
 
   if (!workflow) {
     return <div>Loading...</div>;
   }
 
+  function handleNodeClick(event: React.MouseEvent<Element, MouseEvent>, node: AppNode): void {
+    console.log("handleNodeClick node clicked: ", node);
+    console.log("workflow: ", workflow);
+    setActionId(node.id);
+    setOpenActionDialog(true)
+  }
+
   return (
     <Layout currentPage="Workflows">
-      <ActionDialog open={openActionDialog} setOpen={setOpenActionDialog}/>
-      <ScreenMirror />
-      <div className="w-full items-start gap-4 flex">
-        <Card className="sm:col-span-2 flex-grow" x-chunk="dashboard-05-chunk-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex justify-between">
-              Flow: {workflow.name}
-            </CardTitle>
-            <CardDescription className="max-w-lg text-balance leading-relaxed">
-              Build your flow here
-            </CardDescription>
-            <Separator className="my-2" />
-          </CardHeader>
-          <CardContent className="flex flex-col items-center px-6 py-0 text-sm gap-2 flex-wrap h-[700px]">
-            <ReactFlow
-              nodes={nodes}
-              nodeTypes={{ 'position-logger': PositionLoggerNode }}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              edges={edges}
-              edgeTypes={{}}
-              onNodeClick={(event, node) => setOpenActionDialog(true)}
-              onConnect={onConnect}
-              proOptions={{ hideAttribution: true }}
-              fitView
-            >
-              <Background />
-              <MiniMap />
-              <Controls />
-            </ReactFlow>
-          </CardContent>
-          <CardFooter>
-          </CardFooter>
-        </Card>
-      </div>
+      <WorkflowContext.Provider value={{ workflow, setWorkflow }}>
+        <ActionDialog open={openActionDialog} setOpen={setOpenActionDialog} actionId={actionId} />
+        <ScreenMirror />
+        <div className="w-full items-start gap-4 flex">
+          <Card className="sm:col-span-2 flex-grow" x-chunk="dashboard-05-chunk-0">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex justify-between">
+                Flow: {workflow.name}
+              </CardTitle>
+              <CardDescription className="max-w-lg text-balance leading-relaxed">
+                Build your flow here
+              </CardDescription>
+              <Separator className="my-2" />
+            </CardHeader>
+            <CardContent className="flex flex-col items-center px-6 py-0 text-sm gap-2 flex-wrap h-[600px]">
+              <ReactFlow
+                nodes={nodes}
+                nodeTypes={{ 'position-logger': PositionLoggerNode }}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                edges={edges}
+                edgeTypes={{}}
+                onNodeClick={(event, node) => handleNodeClick(event, node)}
+                onConnect={onConnect}
+                proOptions={{ hideAttribution: true }}
+                fitView
+              >
+                <Background />
+                <MiniMap />
+                <Controls />
+              </ReactFlow>
+            </CardContent>
+            <CardFooter>
+            </CardFooter>
+          </Card>
+        </div>
+      </WorkflowContext.Provider>
     </Layout>
   )
 }

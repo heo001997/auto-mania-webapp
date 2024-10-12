@@ -1,23 +1,26 @@
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from "@/components/ui/select";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import ActionFormTouchCoordinate from "./ActionFormTouchCoordinate";
 import ActionFormTouchXPath from "./ActionFormTouchXPath";
 import ActionFormTouchText from "./ActionFormTouchText";
 import ActionFormTouchImage from "./ActionFormTouchImage";
+import { ActionContext } from "@/contexts/ActionContext";
 
 export default function ActionFormTouch() {
-  const [type, setType] = useState<string>('')
+  const { workflow, setWorkflow } = useContext(ActionContext);
+  const action = workflow.data
+  const subType = action.subType
 
   const handleTypeChange = (value: string) => {
-    setType(value)
+    setWorkflow((prev: any) => ({...prev, data: {...prev.data, subType: value}}))
   }
 
-  const displayForm = type === 'coordinate' ? <ActionFormTouchCoordinate /> : 
-    type === 'xpath' ? <ActionFormTouchXPath /> :
-    type === 'text' ? <ActionFormTouchText /> :
-    type === 'image' ? <ActionFormTouchImage /> : null
+  const displayForm = subType === 'coordinate' ? <ActionFormTouchCoordinate /> : 
+    subType === 'xpath' ? <ActionFormTouchXPath /> :
+    subType === 'text' ? <ActionFormTouchText /> :
+    subType === 'image' ? <ActionFormTouchImage /> : null
 
   return (
     <div>
@@ -29,7 +32,7 @@ export default function ActionFormTouch() {
           </Label>
           <Select onValueChange={handleTypeChange}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select a type" />
+              <SelectValue placeholder="Select a sub type" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>

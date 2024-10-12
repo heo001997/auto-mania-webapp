@@ -1,7 +1,7 @@
 export interface Workflow {
   id: number;
   name: string;
-  data: object[];
+  data: object;
   updatedAt: Date;
   createdAt: Date;
 }

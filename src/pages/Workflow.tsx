@@ -55,7 +55,7 @@ export default function Workflow() {
           ...workflow,
           updatedAt: workflow.updatedAt.toISOString(),
           createdAt: workflow.createdAt.toISOString(),
-          data: Array.isArray(workflow.data) ? workflow.data : [workflow.data]
+          data: workflow.data
         }));
         dispatch(setWorkflows(serializedWorkflows));
         console.log('All workflows:', serializedWorkflows);
@@ -118,7 +118,7 @@ export default function Workflow() {
                             <TableHead>Id</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead className="hidden sm:table-cell">
-                              Sample
+                              Actions
                             </TableHead>
                             <TableHead className="hidden sm:table-cell">
                               Updated At

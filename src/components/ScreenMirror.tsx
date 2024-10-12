@@ -140,10 +140,7 @@ const ScreenMirror = () => {
   return (
     <div className="min-w-[350px] max-w-[500px] xl:min-w-[320px] 2xl:min-w-[450px]">
       <Card className="overflow-hidden" x-chunk="dashboard-05-chunk-4">
-        <CardHeader className="bg-muted/50">
-          <CardTitle className="group flex items-center gap-2 text-lg">
-            Screencap
-          </CardTitle>
+        <CardHeader className="bg-muted/50 p-4">
           <div className="flex justify-center gap-1 items-center">
             <Select 
               onValueChange={handleDeviceChange}

@@ -54,7 +54,7 @@ export function WorkflowDialog({
 
       const newWorkflow = await databaseService.createWorkflow({
         name: workflowName,
-        data: [], // Initialize with an empty array or default workflow data
+        data: {}, // Initialize with an empty array or default workflow data
       });
 
       setWorkflowSaved(true);
@@ -63,7 +63,7 @@ export function WorkflowDialog({
       const serializableWorkflow = {
         id: newWorkflow,
         name: workflowName,
-        data: [],
+        data: {},
         updatedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
       };

@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { RefreshCcw } from "lucide-react"
-import { useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import ActionFormTouch from "./ActionFormTouch"
 import ActionFormSwipe from "./ActionFormSwipe"
 import { Separator } from "@/components/ui/separator"
@@ -30,21 +30,32 @@ import ActionFormApk from "./ActionFormApk"
 import ActionFormRandomize from "./ActionFormRandomize"
 import ActionFormJavascript from "./ActionFormJavascript"
 import ActionFormWait from "./ActionFormWait"
+import { WorkflowContext } from "@/contexts/WorkflowContext"
+import { ActionContext } from "@/contexts/ActionContext"
 
-export function ActionDialog({open, setOpen, btnTitle}: {open: boolean, setOpen: (open: boolean) => void, btnTitle?: string}) {
-  const [actionForm, setActionForm] = useState<React.ReactNode>(null)
+export function ActionDialog({open, setOpen, btnTitle, actionId}: {open: boolean, setOpen: (open: boolean) => void, btnTitle?: string, actionId: string}) {
+  const { workflow, setWorkflow } = useContext(WorkflowContext);
+  const action = actionId ? workflow.data[actionId] : {}
 
-  const handleActionFormChange = (value: string) => {
-    const form: Record<string, React.ReactNode> = {
-      touch: <ActionFormTouch />,
-      typing: <ActionFormTyping />,
-      processData: <ActionFormProcessData />,
-      apk: <ActionFormApk />,
-      randomize: <ActionFormRandomize />,
-      javascript: <ActionFormJavascript />,
-      wait: <ActionFormWait />,
-    }
-    setActionForm(form[value])
+  const handleActionTypeChange = (value: string) => {
+    setWorkflow((prev: any) => ({...prev, data: {...prev.data, type: value}}))
+  }
+
+  const handleActionLabelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newLabel = e.target.value;
+    setWorkflow((prevWorkflow: any) => ({
+      ...prevWorkflow,
+      data: {
+        ...prevWorkflow.data,
+        [actionId]: {
+          ...prevWorkflow.data[actionId],
+          data: {
+            ...prevWorkflow.data[actionId].data,
+            label: newLabel
+          }
+        }
+      }
+    }));
   }
 
   return (
@@ -56,7 +67,7 @@ export function ActionDialog({open, setOpen, btnTitle}: {open: boolean, setOpen:
         <DialogHeader>
           <DialogTitle className="flex items-center">
             Step for &nbsp;
-            <Select onValueChange={handleActionFormChange}>
+            <Select onValueChange={handleActionTypeChange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select an action" />
               </SelectTrigger>
@@ -77,11 +88,25 @@ export function ActionDialog({open, setOpen, btnTitle}: {open: boolean, setOpen:
             </Label>
             <Input
               id="name"
-              className="w-[40%]"
+              className="w-[40%] font-normal"
+              value={action.data?.label}
+              onChange={handleActionLabelChange}
             />
           </DialogTitle>
         </DialogHeader>
-        {actionForm}
+        {
+          action.data && (
+            <>
+              {action.data.type === 'touch' && <ActionFormTouch />}
+              {action.data.type === 'typing' && <ActionFormTyping />}
+              {action.data.type === 'processData' && <ActionFormProcessData />}
+              {action.data.type === 'apk' && <ActionFormApk />}
+              {action.data.type === 'javascript' && <ActionFormJavascript />}
+              {action.data.type === 'wait' && <ActionFormWait />}
+              {action.data.type === 'randomize' && <ActionFormRandomize />}
+            </>
+          )
+        }
       </DialogContent>
     </Dialog>
   )
