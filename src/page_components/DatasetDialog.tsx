@@ -133,12 +133,11 @@ export function DatasetDialog({
     try {
       const parsedData = parseDatasetInput(datasetItems, datasetInput);
       setDatasetParsed(parsedData)
-      console.log("parsedData: ", parsedData)
+      console.log("update Dataset: ", parsedData)
       
       const updatedDatasetId = await databaseService.updateDataset(datasetId, {
         data: parsedData,
       });
-      console.log("updatedDatasetId: ", updatedDatasetId);
 
       // Create a serializable dataset object
       const updatedDataset: SerializableDataset = {

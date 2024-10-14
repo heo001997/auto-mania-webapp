@@ -10,7 +10,7 @@ class AppDatabase extends Dexie {
     super('AppDatabase');
     this.version(1).stores({
       datasets: '++id, name, type, data, updatedAt, createdAt',
-      workflows: '++id, name, data, updatedAt, createdAt'
+      workflows: '++id, name, data, edges, updatedAt, createdAt'
     });
   }
 }

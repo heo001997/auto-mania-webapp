@@ -2,20 +2,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { WorkflowContext } from "@/contexts/WorkflowContext";
 import JSADBClient from "@/services/JSADBClient";
 import { RootState } from "@/store";
 import { RefreshCcw, Search } from "lucide-react";
-import { ReactNode, useEffect, useState, useRef, MouseEvent } from "react";
+import { ReactNode, useEffect, useState, useRef, MouseEvent, useContext } from "react";
 import { useSelector } from "react-redux";
 
 export default function ActionFormTouchXPath() {
+  const { workflow, setWorkflow, currentActionId } = useContext(WorkflowContext);
+  const action = currentActionId ? workflow.data[currentActionId] : {}
+  const actionData = action.data?.action || {}
+
   const [screencapSrc, setScreencapSrc] = useState<string | null>(null);
   const [coordinates, setCoordinates] = useState<{ x: number | null, y: number | null }>({ x: null, y: null });
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [savedCoordinates, setSavedCoordinates] = useState<{ x: number | null, y: number | null }>({ x: null, y: null });
   const [bounds, setBounds] = useState<{ left: number, top: number, right: number, bottom: number } | null>(null);
-  const [elementXPath, setElementXPath] = useState<string>('');
-  const [elementXText, setElementXText] = useState<string>('');
+  const [elementXPath, setElementXPath] = useState<string>(actionData.xpath || '');
   const [elementBounds, setElementBounds] = useState<string>('');
   const imgRef = useRef<HTMLImageElement>(null);
   const device = useSelector((state: RootState) => state.devices.currentDevice);
@@ -59,7 +63,22 @@ export default function ActionFormTouchXPath() {
       if (result.xpath) {
         setSavedCoordinates(coordinates);
         setElementXPath(result.xpath);
-        setElementXText(`//node[@text="${result.text}"]`);
+        setWorkflow((prev: any) => {
+          return {
+            ...prev, 
+            data: {
+              ...prev.data, [currentActionId]: {
+                ...prev.data[currentActionId], data: {
+                  ...prev.data[currentActionId].data, 
+                  action: {
+                    ...prev.data[currentActionId].data.action,
+                    xpath: result.xpath
+                  }
+                }
+              }
+            }
+          }
+        })
       }
     });
   };
@@ -83,11 +102,6 @@ export default function ActionFormTouchXPath() {
           const centerX = Math.round((newBounds.left + newBounds.right) / 2);
           const centerY = Math.round((newBounds.top + newBounds.bottom) / 2);
           setSavedCoordinates({ x: centerX, y: centerY });
-        }
-
-        // Set the XText if available
-        if (result.text) {
-          setElementXText(`//node[@text="${result.text}"]`);
         }
       } else {
         // Handle case when no node is found

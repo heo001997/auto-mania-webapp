@@ -1,13 +1,16 @@
+import { WorkflowContext } from '@/contexts/WorkflowContext';
+import ActionRunnerService from '@/services/ActionRunnerService';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { Node, BuiltInNode } from '@xyflow/react';
 import { debug } from 'console';
 import { Play, Plus, PlusCircle, X } from 'lucide-react';
-import { useId } from 'react';
+import { useContext, useId } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 
-export type PositionLoggerNode = Node<{ 
-    label: string; 
-    setWorkflow: React.Dispatch<React.SetStateAction<AppNode[]>>; 
-    action: object; 
+export type PositionLoggerNode = Node<{
+    label: string;
+    action: object;
   }, 'position-logger'
 >;
 export type AppNode = BuiltInNode | PositionLoggerNode;
@@ -18,7 +21,8 @@ export function PositionLoggerNode({
   positionAbsoluteY,
   data,
 }: NodeProps<PositionLoggerNode>) {
-  const { setWorkflow } = data as { setWorkflow: React.Dispatch<React.SetStateAction<AppNode[]>> };
+  const { setWorkflow } = useContext(WorkflowContext);
+  const currentDevice = useSelector((state: RootState) => state.devices.currentDevice);
   const x = Math.round(positionAbsoluteX);
   const y = Math.round(positionAbsoluteY);
   const displayX = x + 'px';
@@ -40,8 +44,8 @@ export function PositionLoggerNode({
 
   function handlePlayNode(event: React.MouseEvent, id: string) {
     event.stopPropagation();
-
-    console.log("play node", id)
+    new ActionRunnerService(data.action, currentDevice).execute();
+    console.log("play node", id);
   }
 
   function handleAddNode(event: React.MouseEvent, x: number, y: number) {
@@ -55,7 +59,7 @@ export function PositionLoggerNode({
       id: crypto.randomUUID(),
       type: 'position-logger',
       position: position,
-      data: { label: `New Action`, setWorkflow: setWorkflow, action: {} },
+      data: { label: `New Action`, action: {} },
     };
 
     setWorkflow((prevWorkflow: any) => {
@@ -65,8 +69,6 @@ export function PositionLoggerNode({
         data: newData
       };
     });
-
-    console.log('clicked add new node')
   }
 
   return (

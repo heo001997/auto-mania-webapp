@@ -1,7 +1,10 @@
+import { Edge } from "@xyflow/react";
+
 export interface Workflow {
   id: number;
   name: string;
   data: object;
+  edges: [];
   updatedAt: Date;
   createdAt: Date;
 }

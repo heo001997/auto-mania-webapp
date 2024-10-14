@@ -33,12 +33,28 @@ import ActionFormWait from "./ActionFormWait"
 import { WorkflowContext } from "@/contexts/WorkflowContext"
 import { ActionContext } from "@/contexts/ActionContext"
 
-export function ActionDialog({open, setOpen, btnTitle, actionId}: {open: boolean, setOpen: (open: boolean) => void, btnTitle?: string, actionId: string}) {
-  const { workflow, setWorkflow } = useContext(WorkflowContext);
-  const action = actionId ? workflow.data[actionId] : {}
+export function ActionDialog({open, setOpen, btnTitle}: {open: boolean, setOpen: (open: boolean) => void, btnTitle?: string}) {
+  const { workflow, setWorkflow, currentActionId } = useContext(WorkflowContext);
+  const action = currentActionId ? workflow.data[currentActionId] : {}
+  const actionData = action.data?.action || {}
 
   const handleActionTypeChange = (value: string) => {
-    setWorkflow((prev: any) => ({...prev, data: {...prev.data, type: value}}))
+    setWorkflow((prevWorkflow: any) => ({
+      ...prevWorkflow,
+      data: {
+        ...prevWorkflow.data,
+        [currentActionId]: {
+          ...prevWorkflow.data[currentActionId],
+          data: {
+            ...prevWorkflow.data[currentActionId].data,
+            action: {
+              ...prevWorkflow.data[currentActionId].data.action,
+              type: value
+            }
+          }
+        }
+      }
+    }));
   }
 
   const handleActionLabelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,10 +63,10 @@ export function ActionDialog({open, setOpen, btnTitle, actionId}: {open: boolean
       ...prevWorkflow,
       data: {
         ...prevWorkflow.data,
-        [actionId]: {
-          ...prevWorkflow.data[actionId],
+        [currentActionId]: {
+          ...prevWorkflow.data[currentActionId],
           data: {
-            ...prevWorkflow.data[actionId].data,
+            ...prevWorkflow.data[currentActionId].data,
             label: newLabel
           }
         }
@@ -67,7 +83,7 @@ export function ActionDialog({open, setOpen, btnTitle, actionId}: {open: boolean
         <DialogHeader>
           <DialogTitle className="flex items-center">
             Step for &nbsp;
-            <Select onValueChange={handleActionTypeChange}>
+            <Select onValueChange={handleActionTypeChange} value={actionData.type}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select an action" />
               </SelectTrigger>
@@ -94,19 +110,13 @@ export function ActionDialog({open, setOpen, btnTitle, actionId}: {open: boolean
             />
           </DialogTitle>
         </DialogHeader>
-        {
-          action.data && (
-            <>
-              {action.data.type === 'touch' && <ActionFormTouch />}
-              {action.data.type === 'typing' && <ActionFormTyping />}
-              {action.data.type === 'processData' && <ActionFormProcessData />}
-              {action.data.type === 'apk' && <ActionFormApk />}
-              {action.data.type === 'javascript' && <ActionFormJavascript />}
-              {action.data.type === 'wait' && <ActionFormWait />}
-              {action.data.type === 'randomize' && <ActionFormRandomize />}
-            </>
-          )
-        }
+        {actionData.type === 'touch' && <ActionFormTouch />}
+        {actionData.type === 'typing' && <ActionFormTyping />}
+        {actionData.type === 'processData' && <ActionFormProcessData />}
+        {actionData.type === 'apk' && <ActionFormApk />}
+        {actionData.type === 'javascript' && <ActionFormJavascript />}
+        {actionData.type === 'wait' && <ActionFormWait />}
+        {actionData.type === 'randomize' && <ActionFormRandomize />}
       </DialogContent>
     </Dialog>
   )

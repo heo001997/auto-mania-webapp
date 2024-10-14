@@ -6,18 +6,32 @@ import ActionFormTouchCoordinate from "./ActionFormTouchCoordinate";
 import ActionFormTouchXPath from "./ActionFormTouchXPath";
 import ActionFormTouchText from "./ActionFormTouchText";
 import ActionFormTouchImage from "./ActionFormTouchImage";
-import { ActionContext } from "@/contexts/ActionContext";
+import { WorkflowContext } from "@/contexts/WorkflowContext";
 
 export default function ActionFormTouch() {
-  const { workflow, setWorkflow } = useContext(ActionContext);
-  const action = workflow.data
-  const subType = action.subType
+  const { workflow, setWorkflow, currentActionId } = useContext(WorkflowContext);
+  const action = currentActionId ? workflow.data[currentActionId] : {}
+  const actionData = action.data?.action || {}
+  const subType = actionData.subType || ""
 
   const handleTypeChange = (value: string) => {
-    setWorkflow((prev: any) => ({...prev, data: {...prev.data, subType: value}}))
+    setWorkflow((prev: any) => {
+      return {
+        ...prev,
+        data: {
+          ...prev.data, [currentActionId]: {
+            ...prev.data[currentActionId], data: {
+              ...prev.data[currentActionId].data, action: {
+                ...prev.data[currentActionId].data.action, subType: value
+              }
+            }
+          }
+        }
+      }
+    })
   }
 
-  const displayForm = subType === 'coordinate' ? <ActionFormTouchCoordinate /> : 
+  const displayForm = subType === 'coordinate' ? <ActionFormTouchCoordinate /> :
     subType === 'xpath' ? <ActionFormTouchXPath /> :
     subType === 'text' ? <ActionFormTouchText /> :
     subType === 'image' ? <ActionFormTouchImage /> : null
@@ -30,7 +44,7 @@ export default function ActionFormTouch() {
           <Label htmlFor="name" className="text-right">
             Type
           </Label>
-          <Select onValueChange={handleTypeChange}>
+          <Select onValueChange={handleTypeChange} value={subType || ""}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select a sub type" />
             </SelectTrigger>

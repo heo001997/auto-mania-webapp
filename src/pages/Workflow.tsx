@@ -58,7 +58,7 @@ export default function Workflow() {
           data: workflow.data
         }));
         dispatch(setWorkflows(serializedWorkflows));
-        console.log('All workflows:', serializedWorkflows);
+        console.log('Workflows:', serializedWorkflows);
       } catch (error) {
         console.error('Error fetching workflows:', error);
       }
@@ -117,7 +117,7 @@ export default function Workflow() {
                           <TableRow>
                             <TableHead>Id</TableHead>
                             <TableHead>Name</TableHead>
-                            <TableHead className="hidden sm:table-cell">
+                            <TableHead className="hidden sm:table-cell max-w-[400px] truncate">
                               Actions
                             </TableHead>
                             <TableHead className="hidden sm:table-cell">
@@ -140,7 +140,9 @@ export default function Workflow() {
                             >
                               <TableCell>{workflow.id}</TableCell>
                               <TableCell>{workflow.name}</TableCell>
-                              <TableCell>{JSON.stringify(workflow.data)}</TableCell>
+                              <TableCell className="hidden md:table-cell truncate max-w-[400px]">
+                                {JSON.stringify(workflow.data)}
+                              </TableCell>
                               <TableCell>{new Date(workflow.updatedAt).toLocaleString()}</TableCell>
                               <TableCell>{new Date(workflow.createdAt).toLocaleString()}</TableCell>
                               <TableCell>

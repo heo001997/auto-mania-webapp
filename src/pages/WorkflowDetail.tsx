@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef, useContext } from "react";
-import { ArrowBigLeft, CirclePlus, House, LayoutGrid, MoveDown, MoveLeft, MoveRight, Plus, PlusCircle, RefreshCcw, Sun } from "lucide-react"
+import { ArrowBigLeft, ArrowLeft, CirclePlus, House, LayoutGrid, MoveDown, MoveLeft, MoveRight, Play, Plus, PlusCircle, RefreshCcw, Sun } from "lucide-react"
 import Layout from '@/components/Layout';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,6 +27,8 @@ import {
   useEdgesState,
   type OnConnect,
   Edge,
+  EdgeChange,
+  NodeChange,
 } from '@xyflow/react';
 import { AppNode, PositionLoggerNode } from '@/page_components/PositionLoggerNode';
 import '@xyflow/react/dist/style.css';
@@ -37,14 +39,85 @@ export default function WorkflowDetail() {
   const dispatch = useAppDispatch();
   const { id } = useParams();
   const [workflow, setWorkflow] = useState<Workflow | object>({});
-  const [actionId, setActionId] = useState<string>('');
+  const [currentActionId, setCurrentActionId] = useState<string>('');
   const [openActionDialog, setOpenActionDialog] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<AppNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const onConnect: OnConnect = useCallback(
-    (connection) => setEdges((edges) => addEdge(connection, edges)),
-    [setEdges]
-  );
+  const onConnect: OnConnect = useCallback((connection) => {
+    console.log("New connection:", connection);
+    return setEdges((edges) => {
+      const newEdges = addEdge(connection, edges);
+      handleSetWorkflow((prevWorkflow: Workflow) => {
+        if (connection.sourceHandle === "source-right") {
+          const currentNode = connection.source
+          const successNode = connection.target
+          return {
+            ...prevWorkflow,
+            data: {
+              ...prevWorkflow.data,
+              [currentNode]: {
+                ...prevWorkflow.data[currentNode],
+                data: {
+                  ...prevWorkflow.data[currentNode].data,
+                  successNode: successNode
+                }
+              },
+              [successNode]: {
+                ...prevWorkflow.data[successNode],
+                data: {
+                  ...prevWorkflow.data[successNode].data,
+                  previousNode: currentNode
+                }
+              }
+            },
+            edges: newEdges,
+          };
+        } else if (connection.sourceHandle === "source-bottom") {
+          const currentNode = connection.source
+          const failedNode = connection.target
+          return {
+            ...prevWorkflow,
+            data: {
+              ...prevWorkflow.data,
+              [currentNode]: {
+                ...prevWorkflow.data[currentNode],
+                data: {
+                  ...prevWorkflow.data[currentNode].data,
+                  failedNode: failedNode
+                }
+              },
+              [failedNode]: {
+                ...prevWorkflow.data[failedNode],
+                data: {
+                  ...prevWorkflow.data[failedNode].data,
+                  previousNode: currentNode
+                }
+              }
+            },
+            edges: newEdges,
+          };
+        }
+      });
+      return newEdges;
+    });
+  },
+  [setEdges]);
+
+  function handleOnEdgesChange(changes: EdgeChange<Edge>[]){
+    console.log("handleOnEdgesChange changes: ", changes)
+    if (changes.length > 0) {
+      onEdgesChange(changes)
+      if (changes[0].type === 'remove') {
+        handleSetWorkflow((prevWorkflow: Workflow) => {
+          return {
+            ...prevWorkflow,
+            edges: prevWorkflow.edges.filter((edge: Edge) => edge.id !== changes[0].id),
+          };
+        });
+        console.log("remove edge: ", changes[0])
+      }
+    }
+  }
 
   useEffect(() => {
     if (id) {
@@ -52,10 +125,9 @@ export default function WorkflowDetail() {
         try {
           const fetchedWorkflow = await databaseService.getWorkflow(Number(id));
           if (fetchedWorkflow) {
-            console.log("fetchedWorkflow: ", fetchedWorkflow)
-            if (fetchedWorkflow.data) {
-              const newNode: AppNode = { id: 'starter', type: 'position-logger', position: { x: 0, y: 0 }, data: { label: 'Start', setWorkflow: setWorkflow, action: {} } }
-              setWorkflow({ ...fetchedWorkflow, data: { 'starter': newNode } });
+            if (Object.keys(fetchedWorkflow.data).length === 0) {
+              const newNode: AppNode = { id: 'starter', type: 'position-logger', position: { x: 0, y: 0 }, data: { label: 'Start', action: {} } }
+              handleSetWorkflow((prevWorkflow: Workflow) => ({ ...fetchedWorkflow, data: { 'starter': newNode } }));
             } else {
               setWorkflow(fetchedWorkflow);
             }
@@ -70,9 +142,10 @@ export default function WorkflowDetail() {
 
   useEffect(() => {
     if (workflow && workflow.data) {
-      const newNodes = Object.values(workflow.data);
-      console.log("newNodes: ", newNodes);
-      setNodes(newNodes);
+      console.log("Workflow changed, re-set Nodes and Edges: ", workflow)
+      const nodes = Object.values(workflow.data);
+      setNodes(nodes);
+      setEdges(workflow.edges);
     }
   }, [workflow])
 
@@ -81,34 +154,87 @@ export default function WorkflowDetail() {
   }
 
   function handleNodeClick(event: React.MouseEvent<Element, MouseEvent>, node: AppNode): void {
-    console.log("handleNodeClick node clicked: ", node);
-    console.log("workflow: ", workflow);
-    setActionId(node.id);
+    setCurrentActionId(node.id);
     setOpenActionDialog(true)
+  }
+
+  function handleSetWorkflow(updater: (prevWorkflow: Workflow) => Workflow) {
+    setWorkflow((prevWorkflow: Workflow) => {
+      const currentWorkflow = updater(prevWorkflow);
+      console.log("currentWorkflow: ", currentWorkflow);
+
+      // Update the workflow in the database
+      if (currentWorkflow && currentWorkflow.id) {
+        databaseService.updateWorkflow(currentWorkflow.id, currentWorkflow)
+          .then(() => {
+            console.log("Workflow updated in database:", currentWorkflow);
+          })
+          .catch((error) => {
+            console.error("Error updating workflow in database:", error);
+          });
+        return currentWorkflow;
+      } else {
+        console.error("Cannot update workflow: missing id");
+        return prevWorkflow;
+      }
+    });
+  }
+
+  function workflowRunner(){
+    console.log("workflowRunner workflow.data: ", workflow.data)
+  }
+
+  function handleOnNodesChange(changes: NodeChange<AppNode>[]){
+    if (changes.length > 0) {
+      const node = changes[0]
+      const nodeId = node.id
+      if (node.type === 'position') {
+        handleSetWorkflow((prevWorkflow: Workflow) => {
+          const node = prevWorkflow.data[nodeId]
+          const newPosition = {
+            x: changes[0].position.x || prevWorkflow.data[nodeId].position.x,
+            y: changes[0].position.y || prevWorkflow.data[nodeId].position.y
+          }
+          const newWorkflow = {
+            ...prevWorkflow,
+            data: {
+              ...prevWorkflow.data,
+              [nodeId]: {
+                ...prevWorkflow.data[nodeId],
+                position: { ...newPosition }
+              },
+            },
+          }
+          return newWorkflow
+        });
+      }
+    }
+    onNodesChange(changes)
   }
 
   return (
     <Layout currentPage="Workflows">
-      <WorkflowContext.Provider value={{ workflow, setWorkflow }}>
-        <ActionDialog open={openActionDialog} setOpen={setOpenActionDialog} actionId={actionId} />
+      <WorkflowContext.Provider value={{ workflow, setWorkflow: handleSetWorkflow, currentActionId }}>
+        <ActionDialog open={openActionDialog} setOpen={setOpenActionDialog} />
         <ScreenMirror />
         <div className="w-full items-start gap-4 flex">
           <Card className="sm:col-span-2 flex-grow" x-chunk="dashboard-05-chunk-0">
             <CardHeader className="pb-3">
-              <CardTitle className="flex justify-between">
-                Flow: {workflow.name}
+              <CardTitle className="flex justify-between items-center">
+                <div className="flex flex-col">
+                  <div>Flow: {workflow.name}</div>
+                  <div className="text-sm font-normal">Build your workflow here</div>
+                </div>
+                <Button variant="outline" size="icon" onClick={workflowRunner}><Play /></Button>
               </CardTitle>
-              <CardDescription className="max-w-lg text-balance leading-relaxed">
-                Build your flow here
-              </CardDescription>
               <Separator className="my-2" />
             </CardHeader>
             <CardContent className="flex flex-col items-center px-6 py-0 text-sm gap-2 flex-wrap h-[600px]">
               <ReactFlow
                 nodes={nodes}
                 nodeTypes={{ 'position-logger': PositionLoggerNode }}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
+                onNodesChange={handleOnNodesChange}
+                onEdgesChange={handleOnEdgesChange}
                 edges={edges}
                 edgeTypes={{}}
                 onNodeClick={(event, node) => handleNodeClick(event, node)}

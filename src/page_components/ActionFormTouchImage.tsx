@@ -5,24 +5,28 @@ import { Separator } from "@/components/ui/separator";
 import JSADBClient from "@/services/JSADBClient";
 import { RootState } from "@/store";
 import { RefreshCcw, Scan, Search, Upload, X } from "lucide-react";
-import { ReactNode, useEffect, useState, useRef, MouseEvent } from "react";
+import { ReactNode, useEffect, useState, useRef, MouseEvent, useContext } from "react";
 import { useSelector } from "react-redux";
 import { templateMatchingWithNMS } from "@/services/ImageFinder";
+import { WorkflowContext } from "@/contexts/WorkflowContext";
 
 export default function ActionFormTouchImage() {
+  const { workflow, setWorkflow, currentActionId } = useContext(WorkflowContext);
+  const action = currentActionId ? workflow.data[currentActionId] : {}
+  const actionData = action.data?.action || {}
   const [screencapSrc, setScreencapSrc] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [bounds, setBounds] = useState<{ left: number, top: number, right: number, bottom: number } | null>(null);
   const [elementBounds, setElementBounds] = useState<string>('');
   const [cropStart, setCropStart] = useState<{ x: number, y: number } | null>(null);
   const [cropEnd, setCropEnd] = useState<{ x: number, y: number } | null>(null);
-  const [croppedImage, setCroppedImage] = useState<string | null>(null);
+  const [croppedImage, setCroppedImage] = useState<string | null>(actionData.image || null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const device = useSelector((state: RootState) => state.devices.currentDevice);
   const jsadb = new JSADBClient();
-  const [searchArea, setSearchArea] = useState<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
+  const [searchArea, setSearchArea] = useState<{ startX: number, startY: number, endX: number, endY: number } | null>(actionData.area || null);
   const [isSelectingSearchArea, setIsSelectingSearchArea] = useState(false);
 
   const handleMouseMove = (e: MouseEvent<HTMLImageElement>) => {
@@ -33,6 +37,27 @@ export default function ActionFormTouchImage() {
       
       if (isSelectingSearchArea && searchArea) {
         setSearchArea({ ...searchArea, endX: x, endY: y });
+        setWorkflow((prev: any) => {
+          return {
+            ...prev, 
+            data: {
+              ...prev.data, [currentActionId]: {
+                ...prev.data[currentActionId], data: {
+                  ...prev.data[currentActionId].data, 
+                  action: {
+                    ...prev.data[currentActionId].data.action,
+                    area: {
+                      startX: searchArea.startX,
+                      startY: searchArea.startY,
+                      endX: x,
+                      endY: y
+                    }
+                  }
+                }
+              }
+            }
+          }
+        })
       } else if (isDragging) {
         setCropEnd({ x, y });
       }
@@ -49,6 +74,27 @@ export default function ActionFormTouchImage() {
       
       if (isSelectingSearchArea) {
         setSearchArea({ startX: x, startY: y, endX: x, endY: y });
+        setWorkflow((prev: any) => {
+          return {
+            ...prev, 
+            data: {
+              ...prev.data, [currentActionId]: {
+                ...prev.data[currentActionId], data: {
+                  ...prev.data[currentActionId].data, 
+                  action: {
+                    ...prev.data[currentActionId].data.action,
+                    area: {
+                      startX: x,
+                      startY: y,
+                      endX: x,
+                      endY: y
+                    }
+                  }
+                }
+              }
+            }
+          }
+        })
       } else {
         setCropStart({ x, y });
         setCropEnd({ x, y });
@@ -70,13 +116,15 @@ export default function ActionFormTouchImage() {
     setIsDragging(false);
   };
 
-  const captureScreenshot = () => {
+  const captureScreenshot = (isCleanSearchArea: boolean = false) => {
     // Reset bounds and related states
     setElementBounds('');
     setCropStart(null);
     setCropEnd(null);
     setBounds(null);
-    setSearchArea(null);
+    if (isCleanSearchArea) { 
+      setSearchArea(null);
+    }
 
     jsadb.screenshot(device.id).then((data) => {
       setScreencapSrc(`data:image/png;base64,${data.result}`);
@@ -84,7 +132,7 @@ export default function ActionFormTouchImage() {
   };
 
   useEffect(() => {
-    captureScreenshot();
+    captureScreenshot(false);
   }, []);
 
   const handleSearchClick = async () => {
@@ -235,6 +283,22 @@ export default function ActionFormTouchImage() {
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setCroppedImage(result);
+        setWorkflow((prev: any) => {
+          return {
+            ...prev, 
+            data: {
+              ...prev.data, [currentActionId]: {
+                ...prev.data[currentActionId], data: {
+                  ...prev.data[currentActionId].data, 
+                  action: {
+                    ...prev.data[currentActionId].data.action,
+                    image: result
+                  }
+                }
+              }
+            }
+          }
+        })
       };
       reader.readAsDataURL(file);
     }
@@ -263,6 +327,22 @@ export default function ActionFormTouchImage() {
       
       const croppedDataUrl = canvas.toDataURL('image/png');
       setCroppedImage(croppedDataUrl);
+      setWorkflow((prev: any) => {
+        return {
+          ...prev, 
+          data: {
+            ...prev.data, [currentActionId]: {
+              ...prev.data[currentActionId], data: {
+                ...prev.data[currentActionId].data, 
+                action: {
+                  ...prev.data[currentActionId].data.action,
+                  image: croppedDataUrl
+                }
+              }
+            }
+          }
+        }
+      })
 
       // Calculate and set the element bounds
       const bounds = `[${x},${y}][${x + width},${y + height}]`;
@@ -284,8 +364,29 @@ export default function ActionFormTouchImage() {
     const value = e.target.value;
     const match = value.match(/\[(\d+),(\d+)\]\[(\d+),(\d+)\]/);
     if (match) {
-      const [, startX, startY, endX, endY] = match.map(Number);
+      const [startX, startY, endX, endY] = match.map(Number);
       setSearchArea({ startX, startY, endX, endY });
+      setWorkflow((prev: any) => {
+        return {
+          ...prev, 
+          data: {
+            ...prev.data, [currentActionId]: {
+              ...prev.data[currentActionId], data: {
+                ...prev.data[currentActionId].data, 
+                action: {
+                  ...prev.data[currentActionId].data.action,
+                  area: {
+                    startX: startX,
+                    startY: startY,
+                    endX: endX,
+                    endY: endY
+                  }
+                }
+              }
+            }
+          }
+        }
+      })
     }
   };
 

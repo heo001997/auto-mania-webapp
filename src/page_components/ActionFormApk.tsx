@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from "@/components/ui/select";
 import { FlaskConical } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import JSADBClient from "@/services/JSADBClient";
@@ -22,14 +22,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { WorkflowContext } from "@/contexts/WorkflowContext";
 
 export default function ActionFormApk() {
-  const [packageName, setPackageName] = useState<string>('');
+  const { workflow, setWorkflow, currentActionId } = useContext(WorkflowContext);
+  const action = currentActionId ? workflow.data[currentActionId] : {}
+  const actionData = action.data?.action || {}
+  const [packageName, setPackageName] = useState<string>(actionData.packageName || '');
   const [open, setOpen] = useState(false);
   const [installedApps, setInstalledApps] = useState<string[]>([]);
   const device = useSelector((state: RootState) => state.devices.currentDevice);
   const jsadb = new JSADBClient();
-  const [selectedAction, setSelectedAction] = useState<string>('open');
+  const [selectedAction, setSelectedAction] = useState<string>(actionData.subType || 'open');
 
   useEffect(() => {
     if (device) {
@@ -79,6 +83,48 @@ export default function ActionFormApk() {
     }
   };
 
+  function handleTypeChange(value: string): void {
+    setSelectedAction(value)
+    setWorkflow((prev: any) => {
+      return {
+        ...prev, 
+        data: {
+          ...prev.data, [currentActionId]: {
+            ...prev.data[currentActionId], data: {
+              ...prev.data[currentActionId].data, 
+              action: {
+                ...prev.data[currentActionId].data.action,
+                subType: value
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+
+  const onSelectPackageName = (currentValue: string) => {
+    const newPackageName = currentValue === packageName ? "" : currentValue;
+    setPackageName(newPackageName);
+    console.log("Selected package:", newPackageName);
+    setWorkflow((prev: any) => {
+      return {
+        ...prev, 
+        data: {
+          ...prev.data, [currentActionId]: {
+            ...prev.data[currentActionId], data: {
+              ...prev.data[currentActionId].data, action: {
+                ...prev.data[currentActionId].data.action, 
+                packageName: newPackageName
+              }
+            }
+          }
+        }
+      }
+    })
+    setOpen(false);
+  };
+
   return (
     <div>
       <Separator className="mb-5" />
@@ -89,12 +135,12 @@ export default function ActionFormApk() {
           </Label>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="content" className="text-right">
-              Action
+              Type
             </Label>
             <div className="flex gap-2 items-center justify-between w-full">
-              <Select onValueChange={(value) => setSelectedAction(value)}>
+              <Select onValueChange={handleTypeChange} value={selectedAction}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select an action" />
+                  <SelectValue placeholder="Select a type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
@@ -130,12 +176,7 @@ export default function ActionFormApk() {
                         {installedApps.map((app) => (
                           <CommandItem
                             key={app}
-                            onSelect={(currentValue) => {
-                              const newPackageName = currentValue === packageName ? "" : currentValue;
-                              setPackageName(newPackageName);
-                              console.log("Selected package:", newPackageName);
-                              setOpen(false);
-                            }}
+                            onSelect={onSelectPackageName}
                           >
                             {app}
                             <Check

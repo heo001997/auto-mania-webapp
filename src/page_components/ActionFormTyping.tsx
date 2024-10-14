@@ -4,15 +4,19 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { FlaskConical, ScanEye, SendHorizonal, X } from "lucide-react";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import JSADBClient from "@/services/JSADBClient";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import { WorkflowContext } from "@/contexts/WorkflowContext";
 
 export default function ActionFormTyping() {
-  const [text, setText] = useState<string>('');
+  const { workflow, setWorkflow, currentActionId } = useContext(WorkflowContext);
+  const action = currentActionId ? workflow.data[currentActionId] : {}
+  const actionData = action.data?.action || {}
+  const [text, setText] = useState<string>(actionData.text || '');
   const [sample, setSample] = useState<string>('');
-  const [current, setCurrent] = useState<string>(''); // Add this line
+  const [current, setCurrent] = useState<string>('');
   const device = useSelector((state: RootState) => state.devices.currentDevice);
   const jsadb = new JSADBClient();
 
@@ -46,7 +50,7 @@ export default function ActionFormTyping() {
   const handleClearTextClick = async () => {
     if (device) {
       try {
-        const result = await jsadb.clearCurrentInput(device.id, current);
+        const result = await jsadb.clearCurrentInput(device.id);
         if (result.success) {
           console.log("Text cleared successfully:", result.result);
           setCurrent('');
@@ -59,6 +63,26 @@ export default function ActionFormTyping() {
       }
     }
   };
+
+  function handleTextChange(value: string): void {
+    setText(value);
+    setWorkflow((prev: any) => {
+      return {
+        ...prev, 
+        data: {
+          ...prev.data, [currentActionId]: {
+            ...prev.data[currentActionId], data: {
+              ...prev.data[currentActionId].data, 
+              action: {
+                ...prev.data[currentActionId].data.action,
+                text: value
+              }
+            }
+          }
+        }
+      }
+    })
+  }
 
   return (
     <div>
@@ -76,7 +100,7 @@ export default function ActionFormTyping() {
               id="element-text"
               className="col-span-2 min-h-[150px]"
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => handleTextChange(e.target.value)}
             />
             <div className="self-start flex flex-col gap-2">
               <Button 

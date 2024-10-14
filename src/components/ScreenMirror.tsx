@@ -77,8 +77,6 @@ const ScreenMirror = () => {
   };
 
   const handleDeviceChange = (deviceId: string) => {
-    console.log("handleDeviceChange: ", deviceId);
-    console.log("handleDeviceChange devices: ", devices);
     const device = devices.find((d: Device) => d.id === deviceId);
     if (device) {
       dispatch(setCurrentDevice(device));
@@ -119,7 +117,7 @@ const ScreenMirror = () => {
   useEffect(() => {
     const jsadbClient = new JSADBClient();
     jsadbClient.getDeviceList().then((fetchedDevices) => {
-      console.log("devices: ", fetchedDevices);
+      console.log("All Devices: ", fetchedDevices);
       fetchedDevices.forEach((device) => {
         dispatch(addDevice(device));
       });

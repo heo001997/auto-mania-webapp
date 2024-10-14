@@ -1,17 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { WorkflowContext } from "@/contexts/WorkflowContext";
 import JSADBClient from "@/services/JSADBClient";
 import { RootState } from "@/store";
 import { RefreshCcw } from "lucide-react";
-import { ReactNode, useEffect, useState, useRef, MouseEvent } from "react";
+import { ReactNode, useEffect, useState, useRef, MouseEvent, useContext } from "react";
 import { useSelector } from "react-redux";
 
 export default function ActionFormTouchCoordinate() {
+  const { workflow, setWorkflow, currentActionId } = useContext(WorkflowContext);
+  const action = currentActionId ? workflow.data[currentActionId] : {}
+  const actionData = action.data?.action || {}
   const [screencapSrc, setScreencapSrc] = useState<string | null>(null);
   const [coordinates, setCoordinates] = useState({ x: 0, y: 0 });
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
-  const [savedCoordinates, setSavedCoordinates] = useState({ x: 0, y: 0 });
+  const [savedCoordinates, setSavedCoordinates] = useState(actionData.x && actionData.y ? { x: actionData.x, y: actionData.y } : { x: 0, y: 0 });
   const imgRef = useRef<HTMLImageElement>(null);
   const device = useSelector((state: RootState) => state.devices.currentDevice);
   const jsadb = new JSADBClient();
@@ -37,6 +41,23 @@ export default function ActionFormTouchCoordinate() {
 
   const handleImageClick = () => {
     setSavedCoordinates(coordinates);
+    setWorkflow((prev: any) => {
+      return {
+        ...prev, 
+        data: {
+          ...prev.data, [currentActionId]: {
+            ...prev.data[currentActionId], data: {
+              ...prev.data[currentActionId].data, 
+              action: {
+                ...prev.data[currentActionId].data.action,
+                x: coordinates.x, 
+                y: coordinates.y
+              }
+            }
+          }
+        }
+      }
+    })
   };
 
   const handleImageLoad = () => {

@@ -51,11 +51,7 @@ export default function Dataset() {
   const handleRowClick = async (id: number) => {
     try {
       const dataset = await databaseService.getDataset(id);
-      console.log("dataset: ", dataset)
-      console.log("dataset.data: ", dataset?.data)
-
       if (dataset) {
-        console.log(dataset.data)
         setIsNewDataset(false);
         setDatasetName(dataset.name);
         setDatasetType(dataset.type);
