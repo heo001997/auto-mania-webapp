@@ -33,7 +33,7 @@ export default function ActionFormApk() {
   const [installedApps, setInstalledApps] = useState<string[]>([]);
   const device = useSelector((state: RootState) => state.devices.currentDevice);
   const jsadb = new JSADBClient();
-  const [selectedAction, setSelectedAction] = useState<string>(actionData.subType || 'open');
+  const [selectedAction, setSelectedAction] = useState<string>(actionData.subType || '');
 
   useEffect(() => {
     if (device) {

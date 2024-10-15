@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef, useContext } from "react";
-import { ArrowBigLeft, ArrowLeft, CirclePlus, House, LayoutGrid, MoveDown, MoveLeft, MoveRight, Play, Plus, PlusCircle, RefreshCcw, Sun } from "lucide-react"
+import { ArrowBigLeft, ArrowLeft, CirclePlus, House, LayoutGrid, MoveDown, MoveLeft, MoveRight, Play, Plus, PlusCircle, RefreshCcw, Square, Sun } from "lucide-react"
 import Layout from '@/components/Layout';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -34,15 +34,19 @@ import { AppNode, PositionLoggerNode } from '@/page_components/PositionLoggerNod
 import '@xyflow/react/dist/style.css';
 import { WorkflowContext } from "@/contexts/WorkflowContext";
 import { ActionContext } from "@/contexts/ActionContext";
+import WorkflowRunnerService from "@/services/WorkflowRunnerService";
 
 export default function WorkflowDetail() {
   const dispatch = useAppDispatch();
   const { id } = useParams();
+  const currentDevice = useAppSelector((state) => state.devices.currentDevice);
   const [workflow, setWorkflow] = useState<Workflow | object>({});
   const [currentActionId, setCurrentActionId] = useState<string>('');
   const [openActionDialog, setOpenActionDialog] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<AppNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [worker, setWorker] = useState<Worker | null>(null);
   const onConnect: OnConnect = useCallback((connection) => {
     console.log("New connection:", connection);
     return setEdges((edges) => {
@@ -109,9 +113,56 @@ export default function WorkflowDetail() {
       onEdgesChange(changes)
       if (changes[0].type === 'remove') {
         handleSetWorkflow((prevWorkflow: Workflow) => {
+          const removedEdge = prevWorkflow.edges.find((edge: Edge) => edge.id === changes[0].id)
+          const newEdges = prevWorkflow.edges.filter((edge: Edge) => edge.id !== changes[0].id)
+          console.log("removedEdge: ", removedEdge)
+
+          const sourceNode = removedEdge.source
+          const targetNode = removedEdge.target
+          console.log("sourceNode: ", sourceNode)
+          console.log("targetNode: ", targetNode)
+          
+          let newSourceNode;
+          if (removedEdge.sourceHandle === "source-right") {
+            // remove the successNode from the source node
+            newSourceNode = {
+              ...prevWorkflow.data[sourceNode],
+              data: {
+                ...prevWorkflow.data[sourceNode].data,
+                successNode: undefined
+              }
+            }
+          } else if (removedEdge.sourceHandle === "source-bottom") {
+            // remove the failedNode from the source node
+            newSourceNode = {
+              ...prevWorkflow.data[sourceNode],
+              data: {
+                ...prevWorkflow.data[sourceNode].data,
+                failedNode: undefined
+              }
+            }
+          }
+
+          let newTargetNode;
+          if (removedEdge.targetHandle === "target-left") {
+            // remove the previousNode from the target node
+            newTargetNode = {
+              ...prevWorkflow.data[targetNode],
+              data: {
+                ...prevWorkflow.data[targetNode].data,
+                previousNode: undefined
+              }
+            }
+          }
+
           return {
             ...prevWorkflow,
-            edges: prevWorkflow.edges.filter((edge: Edge) => edge.id !== changes[0].id),
+            edges: newEdges,
+            data: {
+              ...prevWorkflow.data,
+              [sourceNode]: newSourceNode,
+              [targetNode]: newTargetNode
+            },
           };
         });
         console.log("remove edge: ", changes[0])
@@ -126,8 +177,8 @@ export default function WorkflowDetail() {
           const fetchedWorkflow = await databaseService.getWorkflow(Number(id));
           if (fetchedWorkflow) {
             if (Object.keys(fetchedWorkflow.data).length === 0) {
-              const newNode: AppNode = { id: 'starter', type: 'position-logger', position: { x: 0, y: 0 }, data: { label: 'Start', action: {} } }
-              handleSetWorkflow((prevWorkflow: Workflow) => ({ ...fetchedWorkflow, data: { 'starter': newNode } }));
+              const newNode: AppNode = { id: 'start', type: 'position-logger', position: { x: 0, y: 0 }, data: { label: 'Start', action: {} } }
+              handleSetWorkflow((prevWorkflow: Workflow) => ({ ...fetchedWorkflow, data: { 'start': newNode } }));
             } else {
               setWorkflow(fetchedWorkflow);
             }
@@ -154,6 +205,8 @@ export default function WorkflowDetail() {
   }
 
   function handleNodeClick(event: React.MouseEvent<Element, MouseEvent>, node: AppNode): void {
+    if (node.id === 'start') return
+    
     setCurrentActionId(node.id);
     setOpenActionDialog(true)
   }
@@ -180,8 +233,32 @@ export default function WorkflowDetail() {
     });
   }
 
-  function workflowRunner(){
-    console.log("workflowRunner workflow.data: ", workflow.data)
+  function workflowRunner() {
+    if (isRunning) {
+      // Stop the workflow
+      if (worker) {
+        console.log("Workflow force stopping!!!");
+        worker.terminate();
+        setWorker(null);
+      }
+      setIsRunning(false);
+    } else {
+      // Start the workflow
+      const newWorker = new Worker(new URL('../services/WorkflowRunnerWorker.ts', import.meta.url), { type: 'module' });
+      newWorker.onmessage = (event) => {
+        const { success, result, error } = event.data;
+        if (success) {
+          console.log("Workflow executed successfully", result);
+        } else {
+          console.error("Unexpected error in workflowRunner", error);
+        }
+        setIsRunning(false);
+        setWorker(null);
+      };
+      newWorker.postMessage({ workflow, device: currentDevice });
+      setWorker(newWorker);
+      setIsRunning(true);
+    }
   }
 
   function handleOnNodesChange(changes: NodeChange<AppNode>[]){
@@ -225,7 +302,9 @@ export default function WorkflowDetail() {
                   <div>Flow: {workflow.name}</div>
                   <div className="text-sm font-normal">Build your workflow here</div>
                 </div>
-                <Button variant="outline" size="icon" onClick={workflowRunner}><Play /></Button>
+                <Button variant="outline" size="icon" onClick={workflowRunner}>
+                  {isRunning ? <Square /> : <Play />}
+                </Button>
               </CardTitle>
               <Separator className="my-2" />
             </CardHeader>

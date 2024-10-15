@@ -30,6 +30,7 @@ export function PositionLoggerNode({
 
   function handleRemoveNode(event: React.MouseEvent, id: string) {
     event.stopPropagation();
+    if (id === 'start') return
 
     console.log("remove node", id);
     setWorkflow((prevWorkflow: any) => {
@@ -42,10 +43,21 @@ export function PositionLoggerNode({
     });
   }
 
-  function handlePlayNode(event: React.MouseEvent, id: string) {
+  async function handlePlayNode(event: React.MouseEvent, id: string) {
     event.stopPropagation();
-    new ActionRunnerService(data.action, currentDevice).execute();
-    console.log("play node", id);
+    console.log("handlePlayNode called", id);
+
+    const service = new ActionRunnerService(data.action, currentDevice);
+    const { success, result, error } = await service.execute();
+    if (success) {
+      console.log("Action executed successfully", result);
+    } else {
+      if (error) {
+        console.error("Unxpected error in handlePlayNode", error);
+      } else {
+        console.error("Action executed failed", result);
+      }
+    }
   }
 
   function handleAddNode(event: React.MouseEvent, x: number, y: number) {
@@ -77,16 +89,22 @@ export function PositionLoggerNode({
       {data.label && <div>{data.label}</div>}
 
       <div className="absolute top-[-20px] left-0 right-0 h-[20px] hidden group-hover:block">
-        <button className="absolute left-0 bg-white rounded-full shadow-md w-4 h-4 flex items-center justify-center"
-          onClick={(e) => handleRemoveNode(e, id)}
-        >
-          <X className="w-4 h-4" />
-        </button>
-        <button className="absolute right-5 bg-white rounded-full shadow-md w-4 h-4 flex items-center justify-center"
-          onClick={(e) => handlePlayNode(e, id)}
-        >
-          <Play className="w-4 h-4" />
-        </button>
+        {
+          id !== 'start' && 
+          <button className="absolute left-0 bg-white rounded-full shadow-md w-4 h-4 flex items-center justify-center"
+            onClick={(e) => handleRemoveNode(e, id)}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        }
+        {
+          id !== 'start' && 
+          <button className="absolute right-5 bg-white rounded-full shadow-md w-4 h-4 flex items-center justify-center"
+            onClick={(e) => handlePlayNode(e, id)}
+          >
+            <Play className="w-4 h-4" />
+          </button>
+        }
         <button className="absolute right-0 bg-white rounded-full shadow-md w-4 h-4 flex items-center justify-center"
           onClick={(e) => handleAddNode(e, x, y)}
         >
@@ -98,13 +116,16 @@ export function PositionLoggerNode({
         {displayX} {displayY}
       </div>
 
-      <Handle 
-        id="target-left" 
-        type="target" 
-        position={Position.Left} 
-        isConnectable={true} 
-        className="w-3 h-3 bg-green-600"
-      />
+      {
+        id !== 'start' && 
+        <Handle 
+          id="target-left" 
+          type="target" 
+          position={Position.Left} 
+          isConnectable={true} 
+          className="w-3 h-3 bg-green-600"
+        />
+      }
       <Handle 
         id="source-right" 
         type="source" 
@@ -112,13 +133,16 @@ export function PositionLoggerNode({
         isConnectable={true} 
         className="w-3 h-3 bg-green-600"
       />
-      <Handle 
-        id="source-bottom" 
-        type="source" 
-        position={Position.Bottom} 
-        isConnectable={true} 
-        className="w-3 h-3 bg-red-600"
-      />
+      {
+        id !== 'start' && 
+        <Handle 
+          id="source-bottom" 
+          type="source" 
+          position={Position.Bottom} 
+          isConnectable={true} 
+          className="w-3 h-3 bg-red-600"
+        />
+      }
     </div>
   );
 }

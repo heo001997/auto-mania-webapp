@@ -35,8 +35,9 @@ import { ActionContext } from "@/contexts/ActionContext"
 
 export function ActionDialog({open, setOpen, btnTitle}: {open: boolean, setOpen: (open: boolean) => void, btnTitle?: string}) {
   const { workflow, setWorkflow, currentActionId } = useContext(WorkflowContext);
-  const action = currentActionId ? workflow.data[currentActionId] : {}
-  const actionData = action.data?.action || {}
+  const workflowData = workflow.data
+  const action = currentActionId && workflowData ? workflowData[currentActionId] : {}
+  const actionData = action && action.data?.action || {}
 
   const handleActionTypeChange = (value: string) => {
     setWorkflow((prevWorkflow: any) => ({
