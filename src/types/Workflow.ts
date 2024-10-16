@@ -1,5 +1,3 @@
-import { Edge } from "@xyflow/react";
-
 export interface Workflow {
   id: number;
   name: string;

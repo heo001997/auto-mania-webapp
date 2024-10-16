@@ -102,7 +102,7 @@ export function DatasetDialog({
 
   const handleSave = async () => {
     try {
-      const newDataset = await databaseService.createDataset({
+      const newDataset = await databaseService.datasets.createDataset({
         name: datasetName,
         type: datasetType,
         data: [{'': ''}],
@@ -135,7 +135,7 @@ export function DatasetDialog({
       setDatasetParsed(parsedData)
       console.log("update Dataset: ", parsedData)
       
-      const updatedDatasetId = await databaseService.updateDataset(datasetId, {
+      const updatedDatasetId = await databaseService.datasets.updateDataset(datasetId, {
         data: parsedData,
       });
 

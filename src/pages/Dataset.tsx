@@ -40,7 +40,7 @@ export default function Dataset() {
 
   const handleDelete = async (id: number) => {
     try {
-      await databaseService.deleteDataset(id);
+      await databaseService.datasets.deleteDataset(id);
       dispatch(deleteDataset(id));
       console.log(`Dataset with id ${id} deleted successfully`);
     } catch (error) {
@@ -50,7 +50,7 @@ export default function Dataset() {
 
   const handleRowClick = async (id: number) => {
     try {
-      const dataset = await databaseService.getDataset(id);
+      const dataset = await databaseService.datasets.getDataset(id);
       if (dataset) {
         setIsNewDataset(false);
         setDatasetName(dataset.name);
@@ -70,7 +70,7 @@ export default function Dataset() {
   useEffect(() => {
     async function fetchDatasets() {
       try {
-        const fetchedDatasets = await databaseService.getAllDatasets();
+        const fetchedDatasets = await databaseService.datasets.getAllDatasets();
         const serializedDatasets = fetchedDatasets.map(dataset => ({
           ...dataset,
           updatedAt: dataset.updatedAt.toISOString(),
@@ -166,10 +166,10 @@ export default function Dataset() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {datasets.map((dataset) => (
+                          {datasets.map((dataset, idx) => (
                             <TableRow 
                               key={dataset.id} 
-                              className={dataset.id % 2 === 0 ? "bg-accent" : ""} 
+                              className={idx % 2 === 0 ? "bg-accent" : ""} 
                               onClick={() => handleRowClick(dataset.id)}
                             >
                               <TableCell>{dataset.id}</TableCell>

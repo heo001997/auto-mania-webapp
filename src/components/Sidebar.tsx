@@ -7,11 +7,10 @@ interface SidebarProps {
 
 export default function Sidebar({ currentPage }: SidebarProps) {
   const navItems = [
-    { href: "/", icon: Smartphone, label: "Devices" },
+    { href: "/devices", icon: Smartphone, label: "Devices" },
+    { href: "/runners", icon: ScrollText, label: "Runners" },
     { href: "/workflows", icon: Hammer, label: "Workflows" },
-    { href: "#", icon: Crosshair, label: "Inspector" },
     { href: "/datasets", icon: Database, label: "Datasets" },
-    { href: "#", icon: ScrollText, label: "Logs" },
   ];
 
   return (

@@ -35,7 +35,7 @@ export default function Workflow() {
 
   const handleDelete = async (id: number) => {
     try {
-      await databaseService.deleteWorkflow(id);
+      await databaseService.workflows.deleteWorkflow(id);
       dispatch(deleteWorkflow(id));
       console.log(`Workflow with id ${id} deleted successfully`);
     } catch (error) {
@@ -50,7 +50,8 @@ export default function Workflow() {
   useEffect(() => {
     async function fetchWorkflows() {
       try {
-        const fetchedWorkflows = await databaseService.getAllWorkflows();
+        const fetchedWorkflows = await databaseService.workflows.getAllWorkflows();
+        console.log("fetchedWorkflows: ", fetchedWorkflows)
         const serializedWorkflows = fetchedWorkflows.map(workflow => ({
           ...workflow,
           updatedAt: workflow.updatedAt.toISOString(),
@@ -132,10 +133,10 @@ export default function Workflow() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {workflows.map((workflow) => (
+                          {workflows.map((workflow, idx) => (
                             <TableRow 
                               key={workflow.id} 
-                              className={workflow.id % 2 === 0 ? "bg-accent" : ""} 
+                              className={idx % 2 === 0 ? "bg-accent" : ""} 
                               onClick={() => handleRowClick(workflow.id)}
                             >
                               <TableCell>{workflow.id}</TableCell>

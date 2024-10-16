@@ -3,15 +3,24 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import './App.css'
-import Home from './pages/Home'
 import Workflow from './pages/Workflow';
 import Dataset from './pages/Dataset';
 import WorkflowDetail from './pages/WorkflowDetail';
+import Runner from "./pages/Runner";
+import Device from "./pages/Device";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Home />,
+    element: <Device />,
+  },
+  {
+    path: "/devices",
+    element: <Device />,
+  },
+  {
+    path: "runners",
+    element: <Runner />,
   },
   {
     path: "workflows",

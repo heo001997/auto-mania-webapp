@@ -52,7 +52,7 @@ export function WorkflowDialog({
         return;
       }
 
-      const newWorkflow = await databaseService.createWorkflow({
+      const newWorkflow = await databaseService.workflows.createWorkflow({
         name: workflowName,
         data: {},
         edges: [],

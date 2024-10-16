@@ -174,7 +174,7 @@ export default function WorkflowDetail() {
     if (id) {
       const fetchWorkflow = async () => {
         try {
-          const fetchedWorkflow = await databaseService.getWorkflow(Number(id));
+          const fetchedWorkflow = await databaseService.workflows.getWorkflow(Number(id));
           if (fetchedWorkflow) {
             if (Object.keys(fetchedWorkflow.data).length === 0) {
               const newNode: AppNode = { id: 'start', type: 'position-logger', position: { x: 0, y: 0 }, data: { label: 'Start', action: {} } }
@@ -218,7 +218,7 @@ export default function WorkflowDetail() {
 
       // Update the workflow in the database
       if (currentWorkflow && currentWorkflow.id) {
-        databaseService.updateWorkflow(currentWorkflow.id, currentWorkflow)
+        databaseService.workflows.updateWorkflow(currentWorkflow.id, currentWorkflow)
           .then(() => {
             console.log("Workflow updated in database:", currentWorkflow);
           })
