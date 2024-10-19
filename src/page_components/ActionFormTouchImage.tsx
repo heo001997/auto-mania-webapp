@@ -354,6 +354,22 @@ export default function ActionFormTouchImage() {
     if (searchArea) {
       // Clear the search area if it's already set
       setSearchArea(null);
+      setWorkflow((prev: any) => {
+        return {
+          ...prev, 
+          data: {
+            ...prev.data, [currentActionId]: {
+              ...prev.data[currentActionId], data: {
+                ...prev.data[currentActionId].data, 
+                action: {
+                  ...prev.data[currentActionId].data.action,
+                  area: null
+                }
+              }
+            }
+          }
+        }
+      });
     } else {
       // Start selecting a new search area
       setIsSelectingSearchArea(true);

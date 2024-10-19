@@ -127,13 +127,9 @@ export const templateMatchingWithNMS = async (
         srcROI = src.roi(roiRect);
       }
 
-      // Log dimensions
-      console.log("Source dimensions:", srcROI.cols, "x", srcROI.rows);
-      console.log("Template dimensions:", template.cols, "x", template.rows);
-
       // Check if the template is larger than the source image
       if (template.cols > srcROI.cols || template.rows > srcROI.rows) {
-        throw new Error("Template image is larger than the source image");
+        throw new Error(`Template image (${template.cols}x${template.rows}) is larger than the source image (${srcROI.cols}x${srcROI.rows})`);
       }
 
       // Create result matrix
