@@ -223,6 +223,7 @@ export default function Runner() {
                             <TableHead>Id</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Workflow</TableHead>
+                            <TableHead>Device</TableHead>
                             <TableHead className="hidden sm:table-cell max-w-52">
                               Data
                             </TableHead>
@@ -247,6 +248,7 @@ export default function Runner() {
                               <TableCell>{runner.id}</TableCell>
                               <TableCell>{runner.name}</TableCell>
                               <TableCell>{workflowMap.get(runner.workflowId) || ''}</TableCell>
+                              <TableCell>{devices.find(d => d.id === runner.deviceId)?.name || ''}</TableCell>
                               <TableCell className="max-w-52 truncate">{JSON.stringify(runner.data)}</TableCell>
                               <TableCell>{new Date(runner.updatedAt).toLocaleString()}</TableCell>
                               <TableCell>{new Date(runner.createdAt).toLocaleString()}</TableCell>
@@ -296,7 +298,7 @@ export default function Runner() {
           <ScreenMirror 
             key={runnerId}
             device={devices.find((d: Device) => d.id === runners.find(r => r.id.toString() === runnerId)?.deviceId)}
-            wrapperClassName="2xl:min-w-[30px] 2xl:max-w-[400px] fixed top-20 left-20 z-50"
+            wrapperClassName="2xl:min-w-[300px] 2xl:max-w-[400px] fixed top-20 left-20 z-50"
             onClose={() => setOpenScreenMirrors(prev => ({...prev, [runnerId]: false}))}
           />
         )

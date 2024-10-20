@@ -1,4 +1,3 @@
-import { Runner } from "@/types/Runner";
 import { Device } from "../types/Device";
 import ActionRunnerService from "./ActionRunnerService";
 
@@ -6,18 +5,18 @@ export default class WorkflowRunnerService {
   private workflow: object;
   private device: Device;
   private actions: object[];
-  private runner: Runner;
+  private runnerData: object[];
 
-  constructor(workflow: object, device: Device, runner: Runner) {
+  constructor(workflow: object, device: Device, runnerData: object[]) {
     this.workflow = workflow;
     this.device = device;
     this.actions = workflow.data || {};
-    this.runner = runner;
+    this.runnerData = runnerData;
   }
 
   async execute(): Promise<any> {
     try {
-      console.log("runner: ", this.runner)
+      console.log("runnerData: ", this.runnerData)
       console.log("this.workflow: ", this.workflow)
       console.log("actions: ", this.actions)
       const startNode = this.actions.start;
