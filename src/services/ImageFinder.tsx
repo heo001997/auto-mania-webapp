@@ -1,42 +1,60 @@
 // OpenCV loading function
 function loadOpenCV(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (window.cv) {
+  return new Promise(async (resolve, reject) => {
+    if (self.cv) {
       resolve();
       return;
     }
 
-    const script = document.createElement('script');
-    script.src = '/src/lib/opencv-js-4.5.0.js';
-    script.async = true;
-    script.onload = () => {
-      console.log("OpenCV script loaded");
-      const checkOpenCV = () => {
-        if (window.cv && window.cv.Mat) {
-          console.log("OpenCV is now available");
+    if (isWindow()) {
+      const script = document.createElement('script');
+      script.src = '/src/lib/opencv-js-4.5.0.js';
+      script.async = true;
+      script.onload = () => {
+        console.log("OpenCV script loaded");
+        const checkOpenCV = () => {
+          if (self.cv && self.cv.Mat) {
+            console.log("OpenCV is now available as window");
+            resolve();
+          } else {
+            console.log("Waiting for OpenCV...");
+            setTimeout(checkOpenCV, 100);
+          }
+        };
+        checkOpenCV();
+      };
+      script.onerror = () => {
+        reject(new Error("Failed to load OpenCV"));
+      };
+      document.body.appendChild(script);
+    } else {
+      self.Module = {
+        onRuntimeInitialized: () => {
+          console.log("OpenCV is now available as web worker");
           resolve();
-        } else {
-          console.log("Waiting for OpenCV...");
-          setTimeout(checkOpenCV, 100);
         }
       };
-      checkOpenCV();
-    };
-    script.onerror = () => {
-      reject(new Error("Failed to load OpenCV"));
-    };
-    document.body.appendChild(script);
+      try {
+        await import('/src/lib/opencv-js-4.5.0.js');
+      } catch (error) {
+        reject(new Error("Failed to load OpenCV in Web Worker"));
+      }
+    }
   });
 }
 
 // Wrapper function to ensure OpenCV is loaded
 async function withOpenCV<T>(fn: () => Promise<T>): Promise<T> {
-  if (!window.cv) {
-    await loadOpenCV();
+  try {
+    if (!self.cv) {
+      await loadOpenCV();
+    }
+    return fn();
+  } catch (error) {
+    console.error("Error in withOpenCV", error);
+    throw error;
   }
-  return fn();
 }
-
 function isBase64(str: string): boolean {
   try {
     return btoa(atob(str)) === str;
@@ -45,51 +63,69 @@ function isBase64(str: string): boolean {
   }
 }
 
+function isWindow() {
+  try {
+    if (self instanceof Window) {
+      console.log("Is Window");
+      return true;
+    }
+  } catch (error) {
+    console.log("Is Web Worker");
+    return false;
+  }
+}
+
 function loadImageToMat(imageSrc: string): Promise<any> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';  // This may be necessary for some image sources
-    
-    img.onload = function () {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          const mat = window.cv.imread(canvas);
-          resolve(mat);
-        } else {
-          reject(new Error("Failed to get canvas context"));
-        }
-      } catch (error) {
-        reject(error);
-      }
-    };
-    
-    img.onerror = function (err) {
-      reject(new Error("Failed to load image"));
-    };
-    
-    // Check if the input is already a base64 string
-    if (isBase64(imageSrc)) {
-      img.src = `data:image/png;base64,${imageSrc}`;
-    } else if (imageSrc.startsWith('data:image')) {
-      // If it's a data URL, use it directly
-      img.src = imageSrc;
-    } else {
-      // If it's a URL, fetch it and convert to base64
+    if (!isWindow()) {
+      // Web Worker environment
       fetch(imageSrc)
         .then(response => response.blob())
         .then(blob => {
-          const reader = new FileReader();
-          reader.onloadend = function() {
-            img.src = reader.result as string;
-          }
-          reader.readAsDataURL(blob);
+          createImageBitmap(blob).then(imageBitmap => {
+            const canvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(imageBitmap, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const mat = self.cv.matFromImageData(imageData);
+            resolve(mat);
+          });
         })
         .catch(error => reject(error));
+    } else {
+      // Browser environment
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = function () {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            const mat = self.cv.imread(canvas);
+            resolve(mat);
+          } else {
+            reject(new Error("Failed to get canvas context"));
+          }
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      img.onerror = function (err) {
+        reject(new Error("Failed to load image"));
+      };
+      
+      if (isBase64(imageSrc)) {
+        img.src = `data:image/png;base64,${imageSrc}`;
+      } else if (imageSrc.startsWith('data:image')) {
+        img.src = imageSrc;
+      } else {
+        img.src = imageSrc;
+      }
     }
   });
 }
@@ -103,7 +139,7 @@ export const templateMatchingWithNMS = async (
   regionOfInterest: { startX: number; startY: number; endX: number; endY: number } | null = null
 ) => {
   return withOpenCV(async () => {
-    const cv = window.cv;
+    const cv = self.cv;
 
     try {
       // Load images as cv.Mat
@@ -252,3 +288,6 @@ function nonMaximumSuppression(
 
   return pick;
 }
+
+
+
