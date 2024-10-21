@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { WorkflowContext } from "@/contexts/WorkflowContext";
+import { EnvService } from "@/services/EnvService";
 import JSADBClient from "@/services/JSADBClient";
 import { RootState } from "@/store";
 import { RefreshCcw, Search } from "lucide-react";
@@ -10,7 +11,7 @@ import { ReactNode, useEffect, useState, useRef, MouseEvent, useContext } from "
 import { useSelector } from "react-redux";
 
 export default function ActionFormTouchXPath() {
-  const { workflow, setWorkflow, currentActionId } = useContext(WorkflowContext);
+  const { workflow, setWorkflow, currentActionId, runner, datasets } = useContext(WorkflowContext);
   const action = currentActionId ? workflow.data[currentActionId] : {}
   const actionData = action.data?.action || {}
 
@@ -84,7 +85,15 @@ export default function ActionFormTouchXPath() {
   };
 
   const handleSearchClick = () => {
-    jsadb.findNodeByXPath(elementXPath, device.id).then(({result}) => {
+    const envService = new EnvService();
+    const datasetIdMap = envService.datasetIdMap(runner.data)
+    const variableValueMap: Record<string, string> = envService.variableValueMap(runner.data, datasets, datasetIdMap);
+    const xpathValue = envService.parseVariables(elementXPath, variableValueMap);
+    if (!xpathValue) {
+      return console.log('Invalid XPath')
+    }
+
+    jsadb.findNodeByXPath(xpathValue, device.id).then(({result}) => {
       if (result) {
         // Parse the bounds string
         const boundsMatch = result.bounds.match(/\[(\d+),(\d+)\]\[(\d+),(\d+)\]/);
@@ -154,6 +163,24 @@ export default function ActionFormTouchXPath() {
     }
   };
 
+  const handleXPathChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setElementXPath(e.target.value);
+    setWorkflow((prev: any) => {
+      return {
+        ...prev, 
+        data: {
+          ...prev.data, 
+          [currentActionId]: {
+            ...prev.data[currentActionId], 
+            data: {
+              ...prev.data[currentActionId].data, action: { ...prev.data[currentActionId].data.action, xpath: e.target.value }
+            }
+          }
+        }
+      }
+    })
+  } 
+
   return (
     <div className="flex gap-4 my-4 justify-between">
       <div className="min-w-[450px] max-w-[450px]">
@@ -205,7 +232,7 @@ export default function ActionFormTouchXPath() {
               id="element-xpath"
               className="col-span-2"
               value={elementXPath}
-              onChange={(e) => setElementXPath(e.target.value)}
+              onChange={handleXPathChange}
               onKeyDown={handleKeyPress}
             />
             <Button size="sm" variant="outline" className="col-span-1 h-8 gap-2" onClick={handleSearchClick}>

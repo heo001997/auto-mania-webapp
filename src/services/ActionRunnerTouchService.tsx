@@ -1,16 +1,22 @@
 import JSADBClient from "./JSADBClient";
 import { Device } from "../types/Device";
+import { RunnerData } from "../types/Runner";
 import { templateMatchingWithNMS } from "./ImageFinder";
+import { EnvService } from "./EnvService";
 
 export default class ActionRunnerTouchService {
   private jsadb: JSADBClient;
   private action: object;
   private device: Device;
-
-  constructor(action: object, device: Device) {
+  private variableValueMap: Record<string, string>;
+  private envService: EnvService;
+  
+  constructor(action: object, device: Device, variableValueMap: Record<string, string>) {
     this.jsadb = new JSADBClient();
     this.action = action;
     this.device = device;
+    this.variableValueMap = variableValueMap;
+    this.envService = new EnvService();
   }
 
   async execute(): Promise<any> {
@@ -37,21 +43,48 @@ export default class ActionRunnerTouchService {
 
   private async touchByCoordinate(): Promise<{ success: boolean, result?: any, error?: any }> {
     const { x, y } = this.action;
-    const tapResult = await this.jsadb.tap(x, y, this.device.id);
+    const xStr = x.toString();
+    const yStr = y.toString();
+
+    const xParsed = this.envService.parseVariables(xStr, this.variableValueMap);
+    const yParsed = this.envService.parseVariables(yStr, this.variableValueMap);
+
+    const xValue = Number(this.envService.parseVariables(xParsed, this.variableValueMap));
+    const yValue = Number(this.envService.parseVariables(yParsed, this.variableValueMap));
+
+    if (isNaN(xValue) || isNaN(yValue)) {
+      return { success: false, result: 'Invalid coordinate values' }
+    }
+
+    const tapResult = await this.jsadb.tap(xValue, yValue, this.device.id);
 
     return { success: true, result: tapResult.result }
   }
 
   private async touchByXPath(): Promise<{ success: boolean, result?: any, error?: any }> {
     const xpath = this.action.xpath;
-    const { success, result, error } = await this.touchByNodeFinder(xpath, 'XPath');
+
+    const xpathStr = xpath.toString();
+    const xpathValue = this.envService.parseVariables(xpathStr, this.variableValueMap);
+    if (!xpathValue) {
+      return { success: false, result: 'Invalid XPath' }
+    }
+
+    const { success, result, error } = await this.touchByNodeFinder(xpathValue, 'XPath');
 
     return { success, result, error }
   }
 
   private async touchByText(): Promise<{ success: boolean, result?: any, error?: any }> {
     const text = this.action.text;
-    const XText = `//node[translate(@text,"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz") = "${text.toLowerCase()}"]`;
+
+    const textStr = text.toString();
+    const textValue = this.envService.parseVariables(textStr, this.variableValueMap);
+    if (!textValue) {
+      return { success: false, result: 'Invalid Text' }
+    }
+
+    const XText = `//node[translate(@text,"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz") = "${textValue.toLowerCase()}"]`;
     const { success, result, error } = await this.touchByNodeFinder(XText, 'text');
 
     return { success, result, error }

@@ -69,6 +69,36 @@ export default function ActionFormTouchCoordinate() {
     }
   };
 
+  const handleXChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSavedCoordinates({ ...savedCoordinates, x: e.target.value });
+    setWorkflow((prev: any) => {
+      return {
+        ...prev, data: {
+          ...prev.data, [currentActionId]: {
+            ...prev.data[currentActionId], data: {
+              ...prev.data[currentActionId].data, action: { ...prev.data[currentActionId].data.action, x: e.target.value }
+            }
+          }
+        }
+      }
+    })
+  };
+
+  const handleYChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSavedCoordinates({ ...savedCoordinates, y: e.target.value });
+    setWorkflow((prev: any) => {
+      return {
+        ...prev, data: {
+          ...prev.data, [currentActionId]: {
+            ...prev.data[currentActionId], data: {
+              ...prev.data[currentActionId].data, action: { ...prev.data[currentActionId].data.action, y: e.target.value }
+            }
+          }
+        }
+      }
+    })
+  };  
+
   return (
     <div className="flex gap-4 my-4 justify-between">
       <div className="min-w-[450px] max-w-[450px]">
@@ -119,7 +149,7 @@ export default function ActionFormTouchCoordinate() {
               id="x"
               className="col-span-3"
               value={savedCoordinates.x}
-              readOnly
+              onChange={handleXChange}
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
@@ -130,7 +160,7 @@ export default function ActionFormTouchCoordinate() {
               id="y"
               className="col-span-3"
               value={savedCoordinates.y}
-              readOnly
+              onChange={handleYChange}
             />
           </div>
         </div>

@@ -7,6 +7,8 @@ import { Play, Plus, PlusCircle, X } from 'lucide-react';
 import { useContext, useId } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { EnvService } from '@/services/EnvService';
+import { RunnerData } from '@/types/Runner';
 
 export type PositionLoggerNode = Node<{
     label: string;
@@ -21,7 +23,7 @@ export function PositionLoggerNode({
   positionAbsoluteY,
   data,
 }: NodeProps<PositionLoggerNode>) {
-  const { setWorkflow } = useContext(WorkflowContext);
+  const { setWorkflow, runner, datasets } = useContext(WorkflowContext);
   const currentDevice = useSelector((state: RootState) => state.devices.currentDevice);
   const x = Math.round(positionAbsoluteX);
   const y = Math.round(positionAbsoluteY);
@@ -43,11 +45,22 @@ export function PositionLoggerNode({
     });
   }
 
+  function processRunnerEnv() {
+    return runner.data.map((item: RunnerData) => {
+      console.log("item: ", item);
+      return { variable: item.variable, type: item.type, value: item.value };
+    });
+  }
+
   async function handlePlayNode(event: React.MouseEvent, id: string) {
     event.stopPropagation();
     console.log("handlePlayNode called", id);
 
-    const service = new ActionRunnerService(data.action, currentDevice);
+    const envService = new EnvService();
+    // Create a map of dataset values
+    const datasetIdMap = envService.datasetIdMap(runner.data);
+    const variableValueMap: Record<string, string> = envService.variableValueMap(runner.data, datasets, datasetIdMap);
+    const service = new ActionRunnerService(data.action, currentDevice, variableValueMap);
     const { success, result, error } = await service.execute();
     if (success) {
       console.log("Action executed successfully", result);

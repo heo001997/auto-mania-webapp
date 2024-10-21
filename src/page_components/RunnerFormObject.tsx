@@ -34,7 +34,7 @@ export default function RunnerFormObject({ runner, setRunner }: { runner: Runner
   }, [runner]);
 
   const displaySample = (idx: number) => {
-    const envService = new EnvService(datasets);
+    const envService = new EnvService();
     // Create a map of dataset values
     const datasetIdMap = runner.data.reduce((acc, item) => {
       if (item.type === 'dataset') {
@@ -42,7 +42,7 @@ export default function RunnerFormObject({ runner, setRunner }: { runner: Runner
       }
       return acc;
     }, {} as Record<string, string>);
-    return envService.getRealValue(runner.data, idx, datasetIdMap);
+    return envService.getRealValue(runner.data, idx, datasets, datasetIdMap);
   }
 
   const handleVariableChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {

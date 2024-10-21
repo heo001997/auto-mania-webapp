@@ -1,16 +1,18 @@
 import JSADBClient from "./JSADBClient";
 import { Device } from "../types/Device";
-import { templateMatchingWithNMS } from "./ImageFinder";
+import { RunnerData } from "../types/Runner";
 
 export default class ActionRunnerApkService {
   private jsadb: JSADBClient;
   private action: object;
   private device: Device;
+  private runnerData: RunnerData[];
 
-  constructor(action: object, device: Device) {
+  constructor(action: object, device: Device, runnerData: RunnerData[]) {
     this.jsadb = new JSADBClient();
     this.action = action;
     this.device = device;
+    this.runnerData = runnerData;
   }
 
   async execute(): Promise<{ success: boolean, result?: any, error?: any }> {

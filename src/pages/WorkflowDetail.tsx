@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils"
 import { RunnerDialog } from "@/page_components/RunnerDialog";
 import { Runner } from "@/types/Runner";
 import { updateRunner } from "@/store/slices/runnersSlice";
+import { Dataset } from "@/types/Dataset";
 
 export default function WorkflowDetail() {
   const dispatch = useAppDispatch();
@@ -58,6 +59,7 @@ export default function WorkflowDetail() {
   const [selectedRunner, setSelectedRunner] = useState<Runner | null>(null);
   const [runners, setRunners] = useState<Runner[]>([]);
   const [openRunnerDialog, setOpenRunnerDialog] = useState(false);
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [runnerForm, setRunnerForm] = useState<Runner>({
     id: 0,
     name: '',
@@ -78,6 +80,12 @@ export default function WorkflowDetail() {
       }
     };
     fetchRunners();
+
+    const fetchDatasets = async () => {
+      const fetchedDatasets = await databaseService.datasets.getAllDatasets();
+      setDatasets(fetchedDatasets);
+    };
+    fetchDatasets();
   }, []);
 
   const onConnect: OnConnect = useCallback((connection) => {
@@ -288,7 +296,7 @@ export default function WorkflowDetail() {
         setIsRunning(false);
         setWorker(null);
       };
-      newWorker.postMessage({ workflow, device: currentDevice, runner: runnerForm });
+      newWorker.postMessage({ workflow, device: currentDevice, runner: runnerForm, datasets: datasets });
       setWorker(newWorker);
       setIsRunning(true);
     }
@@ -377,7 +385,7 @@ export default function WorkflowDetail() {
 
   return (
     <Layout currentPage="Workflows">
-      <WorkflowContext.Provider value={{ workflow, setWorkflow: handleSetWorkflow, currentActionId }}>
+      <WorkflowContext.Provider value={{ workflow, setWorkflow: handleSetWorkflow, currentActionId, runner: runnerForm, datasets: datasets }}>
         <ActionDialog open={openActionDialog} setOpen={setOpenActionDialog} />
         <ScreenMirror device={currentDevice} />
         <div className="w-full items-start gap-4 flex">

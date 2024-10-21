@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { WorkflowContext } from "@/contexts/WorkflowContext";
+import { EnvService } from "@/services/EnvService";
 import JSADBClient from "@/services/JSADBClient";
 import { RootState } from "@/store";
 import { RefreshCcw, Search } from "lucide-react";
@@ -10,7 +11,7 @@ import { ReactNode, useEffect, useState, useRef, MouseEvent, useContext } from "
 import { useSelector } from "react-redux";
 
 export default function ActionFormTouchText() {
-  const { workflow, setWorkflow, currentActionId } = useContext(WorkflowContext);
+  const { workflow, setWorkflow, currentActionId, runner, datasets } = useContext(WorkflowContext);
   const action = currentActionId ? workflow.data[currentActionId] : {}
   const actionData = action.data?.action || {}
   const [screencapSrc, setScreencapSrc] = useState<string | null>(null);
@@ -108,7 +109,14 @@ export default function ActionFormTouchText() {
     setElementBounds('');
     setSavedCoordinates({ x: null, y: null });
 
-    const XText = `//node[translate(@text,"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz") = "${elementText}"]`;
+    const envService = new EnvService();
+    const datasetIdMap = envService.datasetIdMap(runner.data)
+    const variableValueMap: Record<string, string> = envService.variableValueMap(runner.data, datasets, datasetIdMap);
+    const xpathValue = envService.parseVariables(elementText, variableValueMap);
+    if (!xpathValue) {
+      return console.log('Invalid XText')
+    }
+    const XText = `//node[translate(@text,"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz") = "${xpathValue}"]`;
 
     jsadb.findNodeByXPath(XText, device.id).then(({result}) => {
       if (result) {

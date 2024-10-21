@@ -9,9 +9,10 @@ import JSADBClient from "@/services/JSADBClient";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { WorkflowContext } from "@/contexts/WorkflowContext";
+import { EnvService } from "@/services/EnvService";
 
 export default function ActionFormTyping() {
-  const { workflow, setWorkflow, currentActionId } = useContext(WorkflowContext);
+  const { workflow, setWorkflow, currentActionId, runner, datasets } = useContext(WorkflowContext);
   const action = currentActionId ? workflow.data[currentActionId] : {}
   const actionData = action.data?.action || {}
   const [text, setText] = useState<string>(actionData.text || '');
@@ -23,7 +24,15 @@ export default function ActionFormTyping() {
   const handleSendClick = async () => {
     if (device && text) {
       try {
-        const result = await jsadb.type(text, device.id);
+        const envService = new EnvService();
+        const datasetIdMap = envService.datasetIdMap(runner.data)
+        const variableValueMap: Record<string, string> = envService.variableValueMap(runner.data, datasets, datasetIdMap);
+        const textValue = envService.parseVariables(text, variableValueMap);
+        if (!textValue) {
+          return console.log('Invalid Text')
+        }
+
+        const result = await jsadb.type(textValue, device.id);
         console.log("Type result:", result);
       } catch (error) {
         console.error("Error typing text:", error);
@@ -44,7 +53,17 @@ export default function ActionFormTyping() {
   };
 
   const handleSampleClick = async () => {
-    if (device && text) setSample(text);
+    if (device && text) {
+      const envService = new EnvService();
+      const datasetIdMap = envService.datasetIdMap(runner.data)
+      const variableValueMap: Record<string, string> = envService.variableValueMap(runner.data, datasets, datasetIdMap);
+      const textValue = envService.parseVariables(text, variableValueMap);
+      if (!textValue) {
+        return console.log('Invalid Text')
+      }
+
+      setSample(textValue);
+    }
   };
 
   const handleClearTextClick = async () => {
