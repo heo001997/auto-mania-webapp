@@ -1,16 +1,21 @@
 import JSADBClient from "./JSADBClient";
 import { Device } from "../types/Device";
 import { RunnerData } from "../types/Runner";
+import { EnvService } from "./EnvService";
 
-export default class ActionRunnerApkService {
+export default class ActionRunnerProcessDataService {
   private jsadb: JSADBClient;
   private action: object;
   private device: Device;
-
-  constructor(action: object, device: Device) {
+  private variableValueMap: Record<string, string>;
+  private envService: EnvService;
+  
+  constructor(action: object, device: Device, variableValueMap: Record<string, string>) {
     this.jsadb = new JSADBClient();
     this.action = action;
     this.device = device;
+    this.variableValueMap = variableValueMap;
+    this.envService = new EnvService();
   }
 
   async execute(): Promise<{ success: boolean, result?: any, error?: any }> {

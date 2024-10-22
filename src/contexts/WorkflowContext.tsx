@@ -14,6 +14,14 @@ export const WorkflowContext = createContext<WorkflowContextType>({
   workflow: {},
   setWorkflow: () => {},
   currentActionId: '',
-  runner: {id: 0, name: '', workflowId: 0, deviceId: '0', data: [], updatedAt: new Date(), createdAt: new Date()},
+  runner: {
+    id: 0,
+    name: '',
+    workflowId: 0,
+    deviceId: '0',
+    data: [],
+    updatedAt: new Date(),
+    createdAt: new Date()
+  },
   datasets: [],
 });

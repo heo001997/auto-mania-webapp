@@ -18,23 +18,30 @@ export default class ActionRunnerService {
   async execute(): Promise<{ success: boolean, result?: any, error?: any }> {
     try {
       const actionType = this.action.type
+      console.log("defaultWait: ", this.variableValueMap.defaultWait)
+      await this.waitService(this.variableValueMap.defaultWait);
 
       let service;
+      let serviceResult;
       if (actionType === 'touch') {
         service = new ActionRunnerTouchService(this.action, this.device, this.variableValueMap);
+        serviceResult = await service.execute();
       } else if (actionType === 'typing') {
         service = new ActionRunnerTypingService(this.action, this.device, this.variableValueMap);
+        serviceResult = await service.execute();
       } else if (actionType === 'press') {
-        service = new ActionRunnerPressService(this.action, this.device, this.variableValueMap);
+        service = new ActionRunnerPressService(this.action, this.device);
+        serviceResult = await service.execute();
       } else if (actionType === 'apk') {
-        service = new ActionRunnerApkService(this.action, this.device, this.variableValueMap);
+        service = new ActionRunnerApkService(this.action, this.device);
+        serviceResult = await service.execute();
       } else if (actionType === 'wait') {
-        service = this.createWaitService();
+        serviceResult = await this.waitService(this.action.sleepTime);
       } else {
         throw new Error('Invalid action type');
       }
       
-      const { success, result, error } = await service.execute();
+      const { success, result, error } = serviceResult;
       return { success, result, error }
     } catch (error) {
       console.error("Unexpected error in ActionRunnerService: ", error);
@@ -42,13 +49,12 @@ export default class ActionRunnerService {
     }
   }
 
-  private createWaitService(): { execute: () => Promise<{ success: boolean }> } {
-    const sleepTime = parseInt(this.action.sleepTime);
+  private async waitService(time: string): Promise<{ success: boolean }> {
+    const sleepTime = parseInt(time);
+    console.log("start wait: ", sleepTime)
     if (isNaN(sleepTime) || sleepTime < 0) {
       throw new Error('Invalid sleep time for wait action');
     }
-    return {
-      execute: () => new Promise(resolve => setTimeout(() => resolve({ success: true }), sleepTime))
-    };
+    return new Promise(resolve => setTimeout(() => resolve({ success: true }), sleepTime));
   }
 }

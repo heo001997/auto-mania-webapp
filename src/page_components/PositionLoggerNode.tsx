@@ -9,6 +9,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { EnvService } from '@/services/EnvService';
 import { RunnerData } from '@/types/Runner';
+import WorkflowRunnerService from '@/services/WorkflowRunnerService';
+import { databaseService } from '@/services/DatabaseService';
 
 export type PositionLoggerNode = Node<{
     label: string;
@@ -45,13 +47,6 @@ export function PositionLoggerNode({
     });
   }
 
-  function processRunnerEnv() {
-    return runner.data.map((item: RunnerData) => {
-      console.log("item: ", item);
-      return { variable: item.variable, type: item.type, value: item.value };
-    });
-  }
-
   async function handlePlayNode(event: React.MouseEvent, id: string) {
     event.stopPropagation();
     console.log("handlePlayNode called", id);
@@ -60,8 +55,21 @@ export function PositionLoggerNode({
     // Create a map of dataset values
     const datasetIdMap = envService.datasetIdMap(runner.data);
     const variableValueMap: Record<string, string> = envService.variableValueMap(runner.data, datasets, datasetIdMap);
-    const service = new ActionRunnerService(data.action, currentDevice, variableValueMap);
-    const { success, result, error } = await service.execute();
+    
+    let service;
+    let serviceResult;
+    if (data.action.type === 'processWorkflow') {
+      const processWorkflow = await databaseService.workflows.getWorkflow(data.action.id);
+      if (!processWorkflow) throw new Error(`Not found processWorkflow id: ${data.action.id}`);
+      
+      service = new WorkflowRunnerService(processWorkflow, currentDevice, runner, datasets);
+      serviceResult = await service.execute();
+    } else {
+      service = new ActionRunnerService(data.action, currentDevice, variableValueMap);
+      serviceResult = await service.execute();
+    }
+
+    const { success, result, error } = serviceResult;
     if (success) {
       console.log("Action executed successfully", result);
     } else {
@@ -111,7 +119,7 @@ export function PositionLoggerNode({
           </button>
         }
         {
-          id !== 'start' && 
+          id !== 'start' && data.action?.type !== 'processData' && 
           <button className="absolute right-5 bg-white rounded-full shadow-md w-4 h-4 flex items-center justify-center"
             onClick={(e) => handlePlayNode(e, id)}
           >

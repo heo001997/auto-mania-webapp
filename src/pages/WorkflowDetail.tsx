@@ -64,7 +64,11 @@ export default function WorkflowDetail() {
     id: 0,
     name: '',
     deviceId: '',
-    data: [],
+    data: [{
+      variable: 'defaultWait',
+      type: 'static',
+      value: '1000'
+    }],
     updatedAt: new Date(),
     createdAt: new Date()
   });

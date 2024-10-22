@@ -111,7 +111,7 @@ export function RunnerDialog({
       <DialogTrigger asChild>
         <Button variant="outline" className={btnTitle ? "" : "hidden"}>{btnTitle}</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[1200px] w-[70%]">
+      <DialogContent className="max-w-[1200px] min-w-[70%]">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             Runner for &nbsp;

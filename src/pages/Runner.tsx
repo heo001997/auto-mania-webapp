@@ -77,9 +77,9 @@ export default function Runner() {
     setRunnerForm({
       name: '',
       data: [{
-        variable: '',
-        type: '',
-        value: ''
+        variable: 'defaultWait',
+        type: 'static',
+        value: '1000'
       }]
     });
     setOpenActionDialog(true);

@@ -7,13 +7,11 @@ export default class ActionRunnerApkService {
   private jsadb: JSADBClient;
   private action: object;
   private device: Device;
-  private runnerData: RunnerData[];
 
-  constructor(action: object, device: Device, runnerData: RunnerData[]) {
+  constructor(action: object, device: Device) {
     this.jsadb = new JSADBClient();
     this.action = action;
     this.device = device;
-    this.runnerData = runnerData;
   }
 
   async execute(): Promise<{ success: boolean, result?: any, error?: any }> {

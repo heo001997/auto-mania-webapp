@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Check, ChevronsUpDown, CircleMinus, CirclePlus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Runner } from "@/types/Runner";
+import { Runner, RunnerData } from "@/types/Runner";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -112,8 +112,9 @@ export default function RunnerFormObject({ runner, setRunner }: { runner: Runner
     }
   };
 
-  const handleRemoveRunnerData = (idx: number) => {
+  const handleRemoveRunnerData = (idx: number, currRunnerData: RunnerData) => {
     if (runner.data.length === 1) return;
+    if (currRunnerData.variable === 'defaultWait') return;
 
     setRunner((prevRunner: Runner) => {
       return { 
@@ -140,16 +141,16 @@ export default function RunnerFormObject({ runner, setRunner }: { runner: Runner
         <Separator className="mt-2 w-full block" />
         <div>
           <div className="mb-5">
-            <Label>
+            <Label className="text-md">
               Structure
             </Label>
           </div>
-          <div className="flex flex-col gap-4 pb-2">
+          <div className="flex flex-col gap-[40px] pb-5">
             {Array.isArray(runner?.data) ? runner.data.map((currRunnerData, index) => {
               return <div className="flex items-center justify-between gap-4" key={index}>
                 <div className="flex flex-col items-center gap-2">
                   <div className="flex items-center gap-2 h-8">
-                    <Button className="min-w-8 min-h-8 p-1" onClick={() => handleRemoveRunnerData(index)}>
+                    <Button className="min-w-8 min-h-8 p-1" onClick={() => handleRemoveRunnerData(index, currRunnerData)}>
                       <CircleMinus className="min-w-4 min-h-4" />
                     </Button>
                     <Label className="text-right">
@@ -246,9 +247,10 @@ export default function RunnerFormObject({ runner, setRunner }: { runner: Runner
                     }
                     {
                       (currRunnerData.type === "static" || currRunnerData.type === "javascript" || currRunnerData.type === "variable") &&
-                      <div className="flex items-center gap-2 min-w-[200px]">
-                        <Input
-                          id="variable"
+                      <div className="flex items-center gap-2 min-w-[200px] max-h-[50px]">
+                        <Textarea
+                          id="value"
+                          className="max-h-[50px]"
                           value={currRunnerData.value}
                           onChange={(e) => handleValueChange(e.target.value, index)}
                         />
@@ -261,8 +263,10 @@ export default function RunnerFormObject({ runner, setRunner }: { runner: Runner
                     <Label htmlFor="humanize" className="text-right">
                       Sample
                     </Label>
-                    <div className="flex items-center gap-2 min-w-28">
-                      <Input
+                    <div className="flex items-center gap-2 min-w-[200px] max-h-[50px]">
+                      <Textarea
+                        id="value"
+                        className="max-h-[50px]"
                         value={displaySample(index)}
                         readOnly={true}
                       />
