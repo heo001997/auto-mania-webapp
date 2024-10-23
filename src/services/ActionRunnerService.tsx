@@ -3,6 +3,7 @@ import ActionRunnerTouchService from "./ActionRunnerTouchService";
 import ActionRunnerApkService from "./ActionRunnerApkService";
 import ActionRunnerTypingService from "./ActionRunnerTypingService";
 import ActionRunnerPressService from "./ActionRunnerPressService";
+import ActionRunnerSwipeService from "./ActionRunnerSwipeService";
 
 export default class ActionRunnerService {
   private action: object;
@@ -25,6 +26,9 @@ export default class ActionRunnerService {
       let serviceResult;
       if (actionType === 'touch') {
         service = new ActionRunnerTouchService(this.action, this.device, this.variableValueMap);
+        serviceResult = await service.execute();
+      } else if (actionType === 'swipe') {
+        service = new ActionRunnerSwipeService(this.action, this.device, this.variableValueMap);
         serviceResult = await service.execute();
       } else if (actionType === 'typing') {
         service = new ActionRunnerTypingService(this.action, this.device, this.variableValueMap);

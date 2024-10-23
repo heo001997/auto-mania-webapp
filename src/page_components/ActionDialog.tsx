@@ -93,6 +93,7 @@ export function ActionDialog({open, setOpen, btnTitle}: {open: boolean, setOpen:
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value="touch">Touch</SelectItem>
+                  <SelectItem value="swipe">Swipe</SelectItem>
                   <SelectItem value="typing">Typing</SelectItem>
                   <SelectItem value="processData">Process Data</SelectItem>
                   <SelectItem value="processWorkflow">Process Workflow</SelectItem>
@@ -116,6 +117,7 @@ export function ActionDialog({open, setOpen, btnTitle}: {open: boolean, setOpen:
           </DialogTitle>
         </DialogHeader>
         {actionData.type === 'touch' && <ActionFormTouch />}
+        {actionData.type === 'swipe' && <ActionFormSwipe />}
         {actionData.type === 'typing' && <ActionFormTyping />}
         {actionData.type === 'processData' && <ActionFormProcessData />}
         {actionData.type === 'processWorkflow' && <ActionFormProcessWorkflow />}
