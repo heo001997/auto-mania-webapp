@@ -8,7 +8,7 @@ function loadOpenCV(): Promise<void> {
 
     if (isWindow()) {
       const script = document.createElement('script');
-      script.src = '/lib/opencv-js-4.5.0.js';
+      script.src = new URL('/lib/opencv-js-4.5.0.js', window.location.origin).href;
       script.async = true;
       script.onload = () => {
         console.log("OpenCV script loaded");
@@ -35,7 +35,8 @@ function loadOpenCV(): Promise<void> {
         }
       };
       try {
-        await import('/lib/opencv-js-4.5.0.js');
+        const url = new URL('/lib/opencv-js-4.5.0.js', import.meta.url).href;
+        await import(/* @vite-ignore */ url);
       } catch (error) {
         reject(new Error("Failed to load OpenCV in Web Worker"));
       }

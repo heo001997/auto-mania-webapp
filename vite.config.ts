@@ -18,7 +18,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         format: 'es'
-      }
+      },
+      external: ['/lib/opencv-js-4.5.0.js']
     },
     copyPublicDir: true,
     assetsInlineLimit: 0
