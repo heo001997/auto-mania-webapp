@@ -1,5 +1,6 @@
 import React from 'react';
-import { Smartphone, Hammer, Crosshair, Database, ScrollText, Settings } from "lucide-react";
+import { Link } from 'react-router-dom';
+import { Smartphone, Hammer, Database, ScrollText, Settings } from "lucide-react";
 
 interface SidebarProps {
   currentPage: string;
@@ -7,10 +8,10 @@ interface SidebarProps {
 
 export default function Sidebar({ currentPage }: SidebarProps) {
   const navItems = [
-    { href: "/devices", icon: Smartphone, label: "Devices" },
-    { href: "/runners", icon: ScrollText, label: "Runners" },
-    { href: "/workflows", icon: Hammer, label: "Workflows" },
-    { href: "/datasets", icon: Database, label: "Datasets" },
+    { href: "#/devices", icon: Smartphone, label: "Devices" },
+    { href: "#/runners", icon: ScrollText, label: "Runners" },
+    { href: "#/workflows", icon: Hammer, label: "Workflows" },
+    { href: "#/datasets", icon: Database, label: "Datasets" },
   ];
 
   return (
@@ -21,7 +22,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
             key={item.label}
             href={item.href}
             className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:text-foreground md:h-8 md:w-8 ${
-              item.href === `/${currentPage.toLowerCase()}` 
+              item.href === `#/${currentPage.toLowerCase()}` 
                 ? "bg-accent text-accent-foreground" 
                 : "text-muted-foreground"
             }`}
@@ -33,7 +34,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
       </nav>
       <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
         <a
-          href="#"
+          href="#/settings"
           className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
         >
           <Settings className="h-5 w-5" />

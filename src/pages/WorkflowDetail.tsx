@@ -289,7 +289,12 @@ export default function WorkflowDetail() {
       setIsRunning(false);
     } else {
       // Start the workflow
-      const newWorker = new Worker(new URL('../services/WorkflowRunnerWorker.ts', import.meta.url), { type: 'module' });
+      const workerUrl = new URL('../services/WorkflowRunnerWorker.ts', import.meta.url);
+      const newWorker = new Worker(workerUrl, {
+        type: 'module',
+        name: 'workflow-runner'
+      });
+
       newWorker.onmessage = (event) => {
         const { success, result, error } = event.data;
         if (success) {
@@ -300,7 +305,14 @@ export default function WorkflowDetail() {
         setIsRunning(false);
         setWorker(null);
       };
-      newWorker.postMessage({ workflow, device: currentDevice, runner: runnerForm, datasets: datasets });
+
+      newWorker.postMessage({ 
+        workflow, 
+        device: currentDevice, 
+        runner: runnerForm, 
+        datasets: datasets 
+      });
+      
       setWorker(newWorker);
       setIsRunning(true);
     }

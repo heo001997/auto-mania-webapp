@@ -1,5 +1,5 @@
 import {
-  createBrowserRouter,
+  createHashRouter,
   RouterProvider,
 } from "react-router-dom";
 import './App.css'
@@ -9,13 +9,13 @@ import WorkflowDetail from './pages/WorkflowDetail';
 import Runner from "./pages/Runner";
 import Device from "./pages/Device";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <Device />,
   },
   {
-    path: "/devices",
+    path: "devices",
     element: <Device />,
   },
   {
