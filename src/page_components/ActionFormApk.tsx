@@ -44,7 +44,7 @@ export default function ActionFormApk() {
   const fetchInstalledApps = async () => {
     if (device) {
       try {
-        const { result } = await jsadb.listInstalledApps(device.id, false);
+        const { result } = await jsadb.listInstalledApps(device.id, true);
         setInstalledApps(Array.isArray(result) ? result : []);
       } catch (error) {
         console.error("Error fetching installed apps:", error);
