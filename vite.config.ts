@@ -20,7 +20,11 @@ export default defineConfig({
         format: 'es'
       }
     },
-    copyPublicDir: true
+    copyPublicDir: true,
+    assetsInlineLimit: 0
+  },
+  optimizeDeps: {
+    exclude: ['opencv-js-4.5.0.js']
   }
 })
 

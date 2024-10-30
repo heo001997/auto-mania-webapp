@@ -35,7 +35,7 @@ function loadOpenCV(): Promise<void> {
         }
       };
       try {
-        await import('/lib/opencv-js-4.5.0.js?url');
+        await import('/lib/opencv-js-4.5.0.js');
       } catch (error) {
         reject(new Error("Failed to load OpenCV in Web Worker"));
       }
