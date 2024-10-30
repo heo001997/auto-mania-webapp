@@ -13,6 +13,12 @@ export default defineConfig({
   },
   worker: {
     format: 'es',
+    plugins: [react()],
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/[name].[hash].js'
+      }
+    }
   },
   build: {
     rollupOptions: {
@@ -20,7 +26,7 @@ export default defineConfig({
         format: 'es',
         assetFileNames: (assetInfo) => {
           if (assetInfo.name === 'opencv-js-4.5.0.js') {
-            return 'lib/[name][extname]';
+            return 'assets/[name][extname]';
           }
           return 'assets/[name]-[hash][extname]';
         }

@@ -289,11 +289,14 @@ export default function WorkflowDetail() {
       setIsRunning(false);
     } else {
       // Start the workflow
-      const workerUrl = new URL('../services/WorkflowRunnerWorker.ts', import.meta.url);
-      const newWorker = new Worker(workerUrl, {
-        type: 'module',
-        name: 'workflow-runner'
-      });
+      console.log("Starting workflow runner to run in Web Worker");
+      const newWorker = new Worker(
+        new URL('../services/WorkflowRunnerWorker.ts', import.meta.url),
+        {
+          type: 'module',
+          name: 'workflow-runner'
+        }
+      );
 
       newWorker.onmessage = (event) => {
         const { success, result, error } = event.data;

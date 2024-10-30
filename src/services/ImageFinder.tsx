@@ -35,6 +35,7 @@ function loadOpenCV(): Promise<void> {
         }
       };
       try {
+        console.log("Loading OpenCV.js inside Web Worker");
         // Fetch the OpenCV script
         const opencvUrl = new URL('/lib/opencv-js-4.5.0.js', self.location.origin).href;
         const response = await fetch(opencvUrl);
