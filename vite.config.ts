@@ -19,7 +19,8 @@ export default defineConfig({
       output: {
         format: 'es'
       }
-    }
+    },
+    copyPublicDir: true
   }
 })
 
