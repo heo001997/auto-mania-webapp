@@ -17,9 +17,14 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        format: 'es'
-      },
-      external: ['/lib/opencv-js-4.5.0.js']
+        format: 'es',
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name === 'opencv-js-4.5.0.js') {
+            return 'lib/[name][extname]';
+          }
+          return 'assets/[name]-[hash][extname]';
+        }
+      }
     },
     copyPublicDir: true,
     assetsInlineLimit: 0

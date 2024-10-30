@@ -35,9 +35,19 @@ function loadOpenCV(): Promise<void> {
         }
       };
       try {
-        const url = new URL('/lib/opencv-js-4.5.0.js', import.meta.url).href;
-        await import(/* @vite-ignore */ url);
+        // Fetch the OpenCV script
+        const opencvUrl = new URL('/lib/opencv-js-4.5.0.js', self.location.origin).href;
+        const response = await fetch(opencvUrl);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const text = await response.text();
+        
+        // Create a blob URL and evaluate it
+        const blob = new Blob([text], { type: 'text/javascript' });
+        const blobUrl = URL.createObjectURL(blob);
+        await import(/* @vite-ignore */ blobUrl);
+        URL.revokeObjectURL(blobUrl);
       } catch (error) {
+        console.error("OpenCV loading error:", error);
         reject(new Error("Failed to load OpenCV in Web Worker"));
       }
     }
