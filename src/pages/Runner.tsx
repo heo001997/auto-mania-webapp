@@ -135,6 +135,7 @@ export default function Runner() {
           const device = devices.find((d: Device) => d.id === runner.deviceId);
           if (workflow && device) {
             // Start the workflow
+            console.log("Starting runner to run in Web Worker Runner: ", runner);
             const newWorker = new Worker(new URL('../services/WorkflowRunnerWorker.ts', import.meta.url), { type: 'module' });
             newWorker.onmessage = (event) => {
               const { success, result, error } = event.data;
@@ -146,7 +147,7 @@ export default function Runner() {
               setIsRunning(prev => ({ ...prev, [id]: false }));
               setWorkers(prev => ({ ...prev, [id]: null }));
             };
-            newWorker.postMessage({ workflow, device: device, runnerData: runner.data });
+            newWorker.postMessage({ workflow, device: device, runner: runner });
             setWorkers(prev => ({ ...prev, [id]: newWorker }));
             setIsRunning(prev => ({ ...prev, [id]: true }));
           } else {
