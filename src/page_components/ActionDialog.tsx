@@ -34,6 +34,7 @@ import ActionFormWait from "./ActionFormWait"
 import { WorkflowContext } from "@/contexts/WorkflowContext"
 import { ActionContext } from "@/contexts/ActionContext"
 import ActionFormProcessWorkflow from "./ActionFormProcessWorkflow"
+import ActionFormUpload from "./ActionFormUpload"
 
 export function ActionDialog({open, setOpen, btnTitle}: {open: boolean, setOpen: (open: boolean) => void, btnTitle?: string}) {
   const { workflow, setWorkflow, currentActionId } = useContext(WorkflowContext);
@@ -100,6 +101,7 @@ export function ActionDialog({open, setOpen, btnTitle}: {open: boolean, setOpen:
                   <SelectItem value="apk">APK</SelectItem>
                   <SelectItem value="press">Press</SelectItem>
                   <SelectItem value="wait">Wait</SelectItem>
+                  <SelectItem value="upload">Upload</SelectItem>
                   <SelectItem value="randomize">Randomize</SelectItem>
                   <SelectItem value="javascript">Javascript</SelectItem>
                 </SelectGroup>
@@ -125,6 +127,7 @@ export function ActionDialog({open, setOpen, btnTitle}: {open: boolean, setOpen:
         {actionData.type === 'press' && <ActionFormPress />}
         {actionData.type === 'javascript' && <ActionFormJavascript />}
         {actionData.type === 'wait' && <ActionFormWait />}
+        {actionData.type === 'upload' && <ActionFormUpload />}
         {actionData.type === 'randomize' && <ActionFormRandomize />}
       </DialogContent>
     </Dialog>

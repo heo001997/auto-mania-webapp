@@ -7,15 +7,37 @@ class JSADBClient {
     this.baseUrl = baseUrl;
   }
 
-  private async request<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
-    const url = new URL(`${this.baseUrl}${endpoint}`);
-    Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
-    
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  private async request<T>(endpoint: string, params: Record<string, string> = {}, method: string = 'GET'): Promise<T> {
+    try {
+      const url = new URL(`${this.baseUrl}${endpoint}`);
+      
+      let response;
+      if (method === 'GET') {
+        if (params && Object.keys(params).length > 0) {
+          Object.keys(params).forEach(key => 
+            url.searchParams.append(key, params[key])
+          );
+        }
+        response = await fetch(url.toString());
+      } else {
+        response = await fetch(url.toString(), {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(params)
+        });
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Request failed:', error);
+      throw error;
     }
-    return await response.json()
   }
 
   async runCommand(command: string, device: string): Promise<any> {
@@ -125,6 +147,18 @@ class JSADBClient {
 
   async screenAwake(device: string, isOn: boolean): Promise<any> {
     return this.request<any>('/screen-awake', { device, isOn: isOn.toString() });
+  }
+
+  async listPaths(path: string): Promise<any> {
+    return this.request<any>('/list-paths', { path: encodeURIComponent(path) });
+  }
+
+  async uploadFile(clientPath: string, mobilePath: string, device: string): Promise<any> {
+    return this.request<any>('/upload-file', {
+      clientPath,
+      mobilePath,
+      device
+    }, 'POST');
   }
 }
 

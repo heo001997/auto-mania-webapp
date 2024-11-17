@@ -2,8 +2,7 @@ import { WorkflowContext } from '@/contexts/WorkflowContext';
 import ActionRunnerService from '@/services/ActionRunnerService';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { Node, BuiltInNode } from '@xyflow/react';
-import { debug } from 'console';
-import { Play, Plus, PlusCircle, X } from 'lucide-react';
+import { Play, Plus, PlusCircle, X, Copy } from 'lucide-react';
 import { useContext, useId } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -43,6 +42,32 @@ export function PositionLoggerNode({
       return {
         ...prevWorkflow,
         data: newData
+      };
+    });
+  }
+
+  function handleDuplicateNode(event: React.MouseEvent, id: string) {
+    event.stopPropagation();
+    if (id === 'start') return;
+
+    console.log("duplicate node", id);
+    setWorkflow((prevWorkflow: any) => {
+      const sourceNode = prevWorkflow.data[id];
+      const newNode = {
+        ...sourceNode,
+        id: crypto.randomUUID(),
+        position: {
+          x: sourceNode.position.x + 100,
+          y: sourceNode.position.y + 100
+        }
+      };
+
+      return {
+        ...prevWorkflow,
+        data: {
+          ...prevWorkflow.data,
+          [newNode.id]: newNode
+        }
       };
     });
   }
@@ -116,6 +141,14 @@ export function PositionLoggerNode({
             onClick={(e) => handleRemoveNode(e, id)}
           >
             <X className="w-4 h-4" />
+          </button>
+        }
+        {
+          id !== 'start' && 
+          <button className="absolute right-10 bg-white rounded-full shadow-md w-4 h-4 flex items-center justify-center"
+            onClick={(e) => handleDuplicateNode(e, id)}
+          >
+            <Copy className="w-4 h-4" />
           </button>
         }
         {

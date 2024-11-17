@@ -4,6 +4,7 @@ import ActionRunnerApkService from "./ActionRunnerApkService";
 import ActionRunnerTypingService from "./ActionRunnerTypingService";
 import ActionRunnerPressService from "./ActionRunnerPressService";
 import ActionRunnerSwipeService from "./ActionRunnerSwipeService";
+import ActionRunnerUploadService from "./ActionRunnerUploadService";
 
 export default class ActionRunnerService {
   private action: object;
@@ -32,6 +33,9 @@ export default class ActionRunnerService {
         serviceResult = await service.execute();
       } else if (actionType === 'typing') {
         service = new ActionRunnerTypingService(this.action, this.device, this.variableValueMap);
+        serviceResult = await service.execute();
+      } else if (actionType === 'upload') {
+        service = new ActionRunnerUploadService(this.action, this.device, this.variableValueMap);
         serviceResult = await service.execute();
       } else if (actionType === 'press') {
         service = new ActionRunnerPressService(this.action, this.device);
